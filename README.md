@@ -1,10 +1,10 @@
-# AI Orchestra
+# Swarm AI
 
 A visual, node-based multi-agent AI orchestration tool — built as a single HTML file.
 
 ## What it does
 
-AI Orchestra lets you design custom AI pipelines using a drag-and-drop canvas. 
+Swarm AI lets you design custom AI pipelines using a drag-and-drop canvas. 
 You can route prompts through multiple AI models simultaneously, collect and 
 synthesise their outputs, and chain the results into further reasoning steps — 
 all without writing code.
@@ -26,7 +26,7 @@ all without writing code.
 
 ## How to use
 
-1. Open `orchestra.html` in any modern browser
+1. Open `swarm-ai.html` in any modern browser
 2. Go to **Settings** and add your API keys for your chosen providers
 3. Open the **Models** canvas and build your pipeline using node blocks
 4. Connect nodes: Prompt → Models → Collect → Output
