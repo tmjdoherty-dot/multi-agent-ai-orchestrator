@@ -1,0 +1,5052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-deep:    #0a0c0f;
+    --bg-panel:   #0f1318;
+    --bg-surface: #141920;
+    --bg-input:   #191f28;
+    --bg-chrome:  var(--bg-input);
+    --bg-hover:   #1d2430;
+    --text-1:     #e8edf4;
+    --text-2:     #8b96a8;
+    --text-3:     #4a5568;
+    --accent-a:   #00e5a0;
+    --accent-b:   #38c6f4;
+    --accent-warn: #f59e0b;
+    --accent-err:  #f87171;
+    --accent-king: #a78bfa;
+    --grad: linear-gradient(135deg, #00e5a0, #38c6f4);
+    --grad-h: linear-gradient(135deg, #00ffb3, #60d5ff);
+    --radius: 12px;
+    --font-ui: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); background: var(--bg-deep); color: var(--text-1); font-size: 15px; }
+
+  #app { display: flex; height: 100vh; }
+
+  /* ── sidebar ── */
+  #sidebar {
+    width: 236px; min-width: 236px;
+    background: var(--bg-chrome);
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 22px 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  #logo {
+    width: 42px; height: 42px; background: var(--grad); border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; line-height: 1; font-weight: 700; color: #060809; flex-shrink: 0;
+    font-family: var(--font-mono);
+  }
+  #app-title {
+    font-size: 26px; font-weight: 700; letter-spacing: 0.02em;
+    line-height: 1.05; color: var(--text-1); white-space: nowrap;
+  }
+  #sidebar-controls { padding: 10px 8px 6px; display: flex; align-items: stretch; }
+  #sidebar-controls .sb-btn { width: 100%; flex: 1 1 auto; min-width: 0; }
+  .sb-btn {
+    flex: 1; padding: 7px 10px; background: var(--bg-surface);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+    color: var(--text-2); font-size: 11px; font-family: var(--font-mono);
+    cursor: pointer; transition: border-color 0.15s, color 0.15s; text-align: center;
+  }
+  .sb-btn:hover { border-color: var(--accent-b); color: var(--text-1); }
+  .sb-btn.grad-btn { background: var(--grad); color: #060809; border-color: transparent; font-weight: 600; }
+  .sb-btn.grad-btn:hover { opacity: 0.85; }
+
+  #search-wrap { padding: 0 8px 6px; }
+  #search-box {
+    width: 100%; padding: 7px 11px; background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 8px;
+    color: var(--text-1); font-size: 12px; font-family: var(--font-mono);
+    outline: none; transition: border-color 0.15s;
+  }
+  #search-box:focus { border-color: var(--accent-b); }
+  #search-box::placeholder { color: var(--text-3); }
+
+  #chat-list-shell { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #chat-list-shell { gap: 8px; padding: 2px 0 8px; }
+  #sidebar-footer {
+    padding: 10px 10px 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .sidebar-split {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-split-header {
+    padding: 10px 14px 6px;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-3); font-family: var(--font-mono);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .sidebar-split-header-actions { display: inline-flex; align-items: center; gap: 8px; }
+  .sidebar-icon-btn {
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--text-2);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s, color 0.15s, background 0.15s, transform 0.1s;
+    padding: 0; margin: 0;
+    line-height: 1;
+  }
+  .sidebar-icon-btn:hover { border-color: rgba(56,198,244,0.45); color: var(--accent-b); background: rgba(255,255,255,0.07); }
+  .sidebar-icon-btn:active { transform: scale(0.96); }
+  .sidebar-icon-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(56,198,244,0.25); border-color: rgba(56,198,244,0.55); }
+  .sidebar-split-body {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    padding: 0 8px;
+  }
+  .sidebar-split-body::-webkit-scrollbar { width: 3px; }
+  .sidebar-split-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+  #chat-list { padding: 2px 0 0; }
+  #model-list { padding: 2px 0 0; }
+
+  .sidebar-divider {
+    height: 1px;
+    margin: 0 12px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .chat-section-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-3); padding: 10px 6px 4px; font-family: var(--font-mono);
+  }
+  .chat-item {
+    padding: 9px 10px; border-radius: 9px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.1s, box-shadow 0.12s;
+    border: 1px solid transparent;
+    position: relative; margin-bottom: 2px;
+    box-sizing: border-box;
+  }
+  /* Use inset rings instead of 1px borders (avoids uneven “hairline” rendering at fractional scales). */
+  .chat-item:hover:not(.active) {
+    background: var(--bg-hover);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .chat-item.active {
+    background:
+      linear-gradient(90deg, rgba(0,229,160,0.55), rgba(56,198,244,0.55)) 0 0 / 3px 100% no-repeat,
+      rgba(0,229,160,0.06);
+    box-shadow: inset 0 0 0 1px rgba(56,198,244,0.42);
+  }
+  .chat-item-text { flex: 1; overflow: hidden; }
+  .chat-item-title { font-size: 12px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-item-meta { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-item-del,
+  .chat-item-exp {
+    opacity: 0; background: none; border: none;
+    color: var(--text-3); cursor: pointer; font-size: 13px;
+    padding: 2px 5px; border-radius: 4px; flex-shrink: 0;
+    transition: opacity 0.1s, color 0.1s;
+  }
+  .chat-item:hover .chat-item-del,
+  .chat-item:hover .chat-item-exp { opacity: 1; }
+  .chat-item-del:hover { color: var(--accent-err); }
+  .chat-item-exp:hover { color: var(--accent-b); }
+
+  /* Models list items (sidebar) */
+  .model-item { align-items: flex-start; }
+  .model-item .chat-item-title { font-family: var(--font-mono); }
+  .model-item .chat-item-meta { line-height: 1.35; }
+
+  /* ── main ── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; position: relative; }
+
+  /* Pipeline picker */
+  .pipeline-dd { flex-shrink: 0; align-self: center; min-width: 0; max-width: 168px; }
+  .pipeline-dd-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; min-height: 36px; padding: 0 10px 0 12px; margin: 0;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; color: var(--accent-b); font-size: 10px;
+    font-family: var(--font-mono); font-weight: 600; cursor: pointer; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; text-align: left;
+  }
+  .pipeline-dd-trigger:hover { border-color: var(--accent-b); background: rgba(255,255,255,0.08); }
+  .pipeline-dd-trigger:focus-visible { border-color: var(--accent-b); box-shadow: 0 0 0 1px var(--accent-b); }
+  .pipeline-dd-trigger[aria-expanded="true"] { border-color: var(--accent-b); box-shadow: 0 0 0 1px rgba(56,198,244,0.35); }
+  #pipeline-dd-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pipeline-dd-chevron {
+    flex-shrink: 0; width: 10px; height: 10px; opacity: 0.85;
+    background: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.5 0.5L4 4L7.5 0.5' stroke='%2365d9a5' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* Pipeline menu */
+  #pipeline-menu-popover {
+    display: none; position: fixed; z-index: 121;
+    min-width: min(280px, calc(100vw - 24px)); max-width: min(320px, calc(100vw - 16px));
+    padding: 6px; border-radius: 12px; background: var(--bg-panel);
+    border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    flex-direction: column; gap: 2px;
+  }
+  #pipeline-menu-popover.visible { display: flex; }
+  .pipeline-menu-item {
+    text-align: left; width: 100%; padding: 10px 12px;
+    border: 1px solid transparent; border-radius: 8px;
+    background: transparent; color: var(--text-1); cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .pipeline-menu-item:hover, .pipeline-menu-item:focus-visible { background: rgba(56,198,244,0.1); color: var(--accent-b); outline: none; }
+  .pipeline-menu-item.is-active { background: rgba(0,229,160,0.08); border-color: rgba(0,229,160,0.22); }
+  .pipeline-menu-item-name { font-size: 12px; font-weight: 600; font-family: var(--font-mono); line-height: 1.3; }
+  .pipeline-menu-item-tag { margin-top: 3px; font-size: 10px; font-family: var(--font-mono); color: var(--text-3); line-height: 1.35; }
+  .pipeline-menu-item:hover .pipeline-menu-item-tag,
+  .pipeline-menu-item:focus-visible .pipeline-menu-item-tag,
+  .pipeline-menu-item.is-active .pipeline-menu-item-tag { color: var(--text-2); }
+
+  /* ── messages pane ── */
+  .messages-pane { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+  .messages-settings-btn {
+    width: 36px; height: 36px; padding: 0; margin: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: var(--grad); color: #060809; border: none; border-radius: 10px;
+    font-size: 17px; line-height: 1; cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s; box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    opacity: 0.88;
+  }
+  .messages-settings-btn:hover { opacity: 0.98; }
+  .messages-settings-btn:active { transform: scale(0.94); }
+  .messages-settings-btn:focus-visible { outline: none; box-shadow: 0 0 0 1px rgba(56,198,244,0.55), 0 2px 10px rgba(0,0,0,0.35); }
+
+  /* Settings modal */
+  #settings-overlay {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #settings-overlay.visible { display: flex; }
+  .settings-card { max-width: 760px; width: 100%; }
+
+  .api-keys-intro { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .api-keys-title { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-1); }
+  .api-keys-sub { font-size: 11px; font-family: var(--font-mono); color: var(--text-3); line-height: 1.45; }
+  #api-keys-root { display: grid; gap: 12px; }
+
+  .provider-card {
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+  }
+  .provider-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .provider-name { font-family: var(--font-mono); font-size: 12px; color: var(--text-1); font-weight: 700; }
+  .provider-hint { margin-top: 3px; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); line-height: 1.35; }
+  .provider-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .mini-btn {
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .mini-btn:hover { border-color: rgba(56,198,244,0.38); color: var(--accent-b); }
+  .mini-btn.danger:hover { border-color: rgba(248,113,113,0.4); color: var(--accent-err); }
+
+  .keys-list { margin-top: 10px; display: grid; gap: 8px; }
+  .key-row { display: flex; align-items: center; gap: 8px; }
+  .key-label {
+    flex-shrink: 0;
+    width: 52px;
+    padding: 0 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-3);
+    text-align: right;
+    user-select: none;
+  }
+  .key-row input[type="password"], .key-row input[type="text"] {
+    flex: 1; min-width: 0;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px; padding: 9px 12px; font-size: 12px; font-family: var(--font-mono);
+    color: var(--text-1); transition: border-color 0.15s; outline: none;
+  }
+  .key-row input:focus { border-color: var(--accent-b); }
+  .keys-empty {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px dashed rgba(255,255,255,0.10);
+    color: var(--text-3);
+    font-size: 11px;
+    font-family: var(--font-mono);
+  }
+  #api-keys-status {
+    margin-top: 10px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-3);
+    user-select: none;
+  }
+
+  #messages {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 56px clamp(14px,3vw,40px) 120px;
+    display: flex; flex-direction: column; gap: 22px; scroll-behavior: smooth;
+    background-color: #2a2d33;
+    background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size: 24px 24px; background-position: 0 0;
+  }
+  #messages::-webkit-scrollbar { width: 3px; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+  /* ── canvas view (viewport: no native scroll; pan/zoom via transform) ── */
+  .canvas-view {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    background: #1e2126;
+    touch-action: none;
+  }
+  .canvas-stage {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .canvas-world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8000px;
+    height: 6000px;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  .canvas-bg {
+    position: absolute;
+    inset: 0;
+    background-color: #2a2d33;
+    background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: 0 0;
+    pointer-events: none;
+  }
+  .canvas-add-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 6;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin: 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-1);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.28);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .canvas-add-btn:hover { border-color: rgba(56,198,244,0.5); color: var(--accent-b); }
+  .canvas-add-btn:active { transform: scale(0.94); }
+  .canvas-add-btn[aria-expanded="true"] { border-color: rgba(56,198,244,0.45); color: var(--accent-b); }
+
+  .canvas-edges-svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8000px;
+    height: 6000px;
+    z-index: 1;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .canvas-edges-svg line,
+  .canvas-edges-svg path {
+    stroke: rgba(56,198,244,0.55);
+    stroke-width: 2;
+    stroke-linecap: round;
+    fill: none;
+  }
+  .canvas-blocks-root {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .canvas-node {
+    position: absolute;
+    pointer-events: auto;
+  }
+  .canvas-node--tab {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+  }
+  .canvas-node--tab .canvas-node-body {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .canvas-node--tab .canvas-node-body > .canvas-block-tab {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    left: auto;
+    top: auto;
+  }
+  .canvas-port {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    margin: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(12,16,22,0.92);
+    color: var(--accent-b);
+    font-size: 7px;
+    line-height: 1;
+    cursor: crosshair;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+  }
+  .canvas-port--in { left: -8px; }
+  .canvas-port--out { right: -8px; }
+  /* Global `button:active { transform: scale(...) }` would replace translateY(-50%) and makes ports “jiggle”. */
+  .canvas-port:active {
+    transform: translateY(-50%);
+    opacity: 0.88;
+  }
+  .canvas-giveall .canvas-port--in { left: -10px; }
+  .canvas-giveall .canvas-port--out { right: -10px; }
+  .canvas-stage.is-linking .canvas-port {
+    box-shadow: 0 0 0 2px rgba(0,229,160,0.28);
+    border-color: rgba(0,229,160,0.5);
+  }
+  .canvas-block-tab {
+    position: absolute;
+    box-sizing: border-box;
+    min-width: 92px;
+    max-width: 140px;
+    min-height: 52px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(12,16,22,0.72);
+    border: 1px solid rgba(0,229,160,0.22);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: auto;
+    user-select: none;
+    cursor: grab;
+  }
+  .canvas-block-tab.is-tone-grad .canvas-block-tab-label {
+    color: #060809;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .canvas-block-tab.is-prompt {
+    background: var(--grad);
+    border-color: rgba(0,0,0,0.18);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  /* Complementary to the green→cyan brand gradient (roughly opposite hue). */
+  .canvas-block-tab.is-output {
+    background: linear-gradient(135deg, #ff3d7a, #ff7a2a);
+    border-color: rgba(0,0,0,0.18);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .canvas-block-tab.is-collect {
+    min-width: 72px;
+    max-width: 96px;
+    min-height: 44px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(12,16,22,0.88);
+    border: 1px solid rgba(56,198,244,0.28);
+  }
+  .canvas-block-tab.is-collect .canvas-block-tab-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    color: var(--accent-b);
+  }
+  .canvas-block-tab:active { cursor: grabbing; }
+  .canvas-view.is-block-dragging,
+  .canvas-view.is-block-dragging .canvas-block-tab { cursor: grabbing; }
+  .canvas-block-tab-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-1);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  /* Give All window (canvas-local UI) */
+  .canvas-giveall {
+    position: absolute;
+    /* Match sidebar scroll surfaces (see `#model-scroll` / `.sidebar-split-body`) */
+    --giveall-bg: var(--bg-input);
+    width: 380px;
+    height: auto;
+    border-radius: 15px;
+    background: transparent;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    isolation: isolate;
+  }
+  /* Gradient “frame” without a 1px padding ring (scales more evenly under canvas zoom). */
+  .canvas-giveall::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .canvas-giveall-inner {
+    position: relative;
+    z-index: 1;
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--giveall-bg);
+    margin: 1px;
+  }
+  .canvas-giveall-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    cursor: grab;
+    user-select: none;
+    background: rgba(10,12,15,0.25);
+  }
+  .canvas-giveall-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--text-1);
+    font-family: var(--font-ui);
+  }
+  .canvas-giveall-close {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-2);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    /* Undo global `button` sizing from settings UI styles */
+    font-weight: 400;
+    transform: none;
+    opacity: 1;
+  }
+  .canvas-giveall-close:hover { color: var(--accent-err); border-color: rgba(248,113,113,0.35); }
+  .canvas-giveall-body {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--giveall-bg);
+  }
+  .canvas-giveall-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: visible;
+  }
+  .canvas-giveall-row {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    padding: 6px 7px;
+    display: grid;
+    grid-template-columns: 86px 1fr;
+    column-gap: 8px;
+    row-gap: 6px;
+    align-items: center;
+    position: relative;
+  }
+  .designation-task-del {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-3);
+    cursor: pointer;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+  .designation-task-del:hover { color: var(--accent-err); border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.08); }
+  /* Per-model output port inside each Give All row (connect each model separately). */
+  .canvas-port--row-out {
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    /* keep the default canvas-port styling (grey/black) so it matches other ports */
+  }
+  .canvas-giveall-field { min-width: 0; }
+  .canvas-giveall-row .span2 { grid-column: 1 / -1; }
+  .canvas-mini-label {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    margin: 0;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .canvas-giveall-row select,
+  .canvas-giveall-row input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-1);
+    outline: none;
+    line-height: 1.2;
+    height: 28px;
+  }
+  .canvas-giveall-row select:focus,
+  .canvas-giveall-row input[type="text"]:focus { border-color: rgba(56,198,244,0.55); }
+
+  .canvas-giveall-textarea {
+    width: 100%;
+    min-height: 76px;
+    max-height: 220px;
+    resize: vertical;
+    box-sizing: border-box;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 9px 10px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-1);
+    line-height: 1.45;
+    outline: none;
+  }
+  .canvas-giveall-textarea:focus { border-color: rgba(56,198,244,0.55); }
+  .canvas-giveall-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 0;
+  }
+  .canvas-mini-btn {
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-2);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 5px 8px;
+    cursor: pointer;
+    line-height: 1.1;
+  }
+  .canvas-mini-btn:hover { border-color: rgba(56,198,244,0.45); color: var(--accent-b); }
+
+  .canvas-audit-textarea {
+    width: 100%;
+    min-height: 150px;
+    max-height: 320px;
+    resize: vertical;
+    box-sizing: border-box;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 10px 11px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-1);
+    line-height: 1.45;
+    outline: none;
+  }
+  .canvas-audit-textarea:focus { border-color: rgba(56,198,244,0.55); }
+  .canvas-audit .canvas-giveall-body { padding-bottom: 10px; }
+  .canvas-audit-prompt-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    width: 100%;
+  }
+  .canvas-audit-prompt-wrap > .canvas-mini-label { align-self: flex-start; }
+  .canvas-loopend .canvas-giveall-body { padding-bottom: 10px; }
+
+  #canvas-add-menu-popover {
+    display: none;
+    position: fixed;
+    z-index: 122;
+    min-width: 280px;
+    max-width: min(360px, calc(100vw - 24px));
+    max-height: min(72vh, 520px);
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--bg-panel);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    flex-direction: column;
+    gap: 2px;
+  }
+  #canvas-add-menu-popover.visible { display: flex; }
+  .canvas-add-menu-title {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    padding: 8px 10px 6px;
+  }
+  .canvas-add-menu-item {
+    text-align: left;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-1);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .canvas-add-menu-item:hover { background: rgba(56,198,244,0.1); border-color: rgba(56,198,244,0.15); }
+  .canvas-add-menu-item-name { display: block; font-size: 12px; font-weight: 600; font-family: var(--font-ui); }
+  .canvas-add-menu-item-desc { display: block; margin-top: 3px; font-size: 10px; font-family: var(--font-mono); color: var(--text-3); line-height: 1.4; }
+
+  .canvas-panning .canvas-stage { cursor: grabbing; }
+  .canvas-view .canvas-stage { cursor: default; }
+
+  .msg-row { display: flex; width: 100%; align-items: flex-start; justify-content: center; }
+  .msg-stage { width: 100%; max-width: 760px; margin: 0 auto; display: flex; }
+  .msg-row-user .msg-stage { justify-content: flex-end; }
+  .msg-row-assistant .msg-stage, .msg-row-system .msg-stage { justify-content: flex-start; }
+
+  .user-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: min(82%, 440px); }
+  .user-bubble {
+    background: rgba(0,100,78,0.55); border: 1px solid rgba(0,229,160,0.28);
+    border-radius: 18px 18px 5px 18px; padding: 8px 13px 9px;
+    font-size: 14px; line-height: 1.5; color: var(--text-1);
+    word-break: break-word; white-space: pre-wrap; box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  }
+
+  .assistant-cluster { width: 100%; max-width: 100%; position: relative; }
+  .orchestra-wait {
+    font-size: 11px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em;
+    color: var(--accent-b); padding: 9px 12px; margin-bottom: 10px; border-radius: 10px;
+    border: 1px solid rgba(56,198,244,0.32); background: rgba(56,198,244,0.09);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset;
+  }
+  .orchestra-wait details { color: var(--text-1); }
+  .orchestra-wait summary { cursor: pointer; user-select: none; color: var(--accent-b); }
+  .orch-tree { margin-top: 8px; padding-left: 6px; white-space: pre; font-family: var(--font-mono); font-size: 11px; line-height: 1.55; color: var(--text-2); }
+  .orch-ok { color: rgba(0,229,160,0.95); }
+  .orch-x { color: rgba(248,113,113,0.95); }
+  .assistant-body { font-size: 15px; line-height: 1.72; color: var(--text-1); overflow-wrap: anywhere; }
+  .assistant-body .md { white-space: normal; line-height: inherit; }
+  .assistant-body .md p { margin: 0 0 10px; }
+  .assistant-body .md p:last-child { margin-bottom: 0; }
+  .assistant-body .md strong { font-weight: 800; color: var(--text-1); }
+  .assistant-body .md em { font-style: normal; color: var(--text-3); }
+  .assistant-body .md h1,
+  .assistant-body .md h2,
+  .assistant-body .md h3 { margin: 12px 0 8px; font-family: var(--font-ui); color: var(--text-1); }
+  .assistant-body .md h1 { font-size: 18px; }
+  .assistant-body .md h2 { font-size: 16px; }
+  .assistant-body .md h3 { font-size: 14px; }
+  .assistant-body .md ul { margin: 6px 0 10px 18px; padding: 0; }
+  .assistant-body .md li { margin: 3px 0; }
+  .assistant-body .md a { color: var(--accent-b); text-decoration: none; }
+  .assistant-body .md a:hover { text-decoration: underline; }
+  .assistant-body .md code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.45;
+    display: inline-block;
+    vertical-align: baseline;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .assistant-body .md pre { margin: 8px 0 12px; padding: 10px 12px; background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: auto; }
+  .assistant-body .md pre code { background: transparent; border: none; padding: 0; display: inline; line-height: 1.5; }
+
+  /* typing */
+  .typing-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin: 0 2px; animation: blink 1.2s infinite; }
+  .typing-dot:nth-child(1) { background: var(--accent-a); }
+  .typing-dot:nth-child(2) { background: color-mix(in srgb, var(--accent-a) 50%, var(--accent-b)); animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { background: var(--accent-b); animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+  /* spinner */
+  .spinner { display: inline-block; width: 10px; height: 10px; border: 1.5px solid rgba(255,255,255,0.15); border-top-color: var(--accent-warn); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 5px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* empty state */
+  #empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 14px; max-width: 560px; width: 100%; margin: 0 auto; padding: 24px 16px; }
+  .empty-glyph, .empty-title { user-select: none; -webkit-user-select: none; }
+  .empty-glyph { font-size: 44px; opacity: 0.3; }
+  .empty-title { font-size: 17px; font-weight: 700; color: var(--text-2); }
+
+  /* error box */
+  #error-box {
+    margin: 10px clamp(14px,3vw,40px) 0; padding: 10px 14px;
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25);
+    border-radius: 9px; font-size: 12px; font-family: var(--font-mono);
+    color: var(--accent-err); display: none; flex-shrink: 0;
+  }
+
+  /* ── composer ── */
+  #composer {
+    position: absolute; left: 0; right: 0;
+    bottom: max(14px, env(safe-area-inset-bottom, 0px));
+    padding: 0 clamp(14px,3vw,40px); z-index: 8;
+    border: none; background: none; backdrop-filter: none; pointer-events: none;
+  }
+  #composer > * { pointer-events: auto; }
+  #composer[hidden] { display: none !important; }
+  #composer-stack { display: flex; flex-direction: column; align-items: stretch; max-width: min(760px,100%); margin: 0 auto; gap: 0; }
+  #composer-workspace-slot { display: flex; justify-content: flex-start; align-items: center; padding: 0 2px 5px; pointer-events: none; }
+  #composer-workspace-slot > * { pointer-events: auto; }
+  #composer-workspace-slot:has(> #composer-workspace-badge[hidden]) { display: none; }
+
+  #input-wrap {
+    display: flex; flex-direction: column;
+    border-radius: 22px; border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(25,31,40,0.82);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+  #attachment-chips:empty { display: none; }
+  #attachment-chips:not(:empty) { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0; }
+  #input-row { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 10px 14px; min-width: 0; background: transparent; }
+  #input-wrap:has(#attachment-chips:not(:empty)) #input-row { padding-top: 6px; }
+
+  #composer-workspace-badge {
+    display: none; align-items: center; gap: 4px;
+    max-width: min(148px,36vw); padding: 3px 7px 3px 8px; border-radius: 8px;
+    font-size: 9px; line-height: 1.2; letter-spacing: 0.01em; font-family: var(--font-mono);
+    color: rgba(232,237,244,0.78); background: rgba(12,16,22,0.42);
+    border: 1px solid rgba(56,198,244,0.22); backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 18px rgba(0,0,0,0.28);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #composer-workspace-badge:not([hidden]) { display: inline-flex; }
+  #composer-workspace-badge .composer-ws-icon { flex-shrink: 0; opacity: 0.75; font-size: 10px; line-height: 1; }
+  #composer-workspace-badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  #composer-workspace-badge-dismiss {
+    flex-shrink: 0; width: 15px; height: 15px; padding: 0; margin: 0 0 0 1px;
+    border: none; border-radius: 4px; background: rgba(255,255,255,0.06);
+    color: rgba(139,150,168,0.9); cursor: pointer; font-size: 11px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.12s, background 0.12s;
+  }
+  #composer-workspace-badge-dismiss:hover { color: var(--accent-err); background: rgba(248,113,113,0.12); }
+
+  #msg-input {
+    flex: 1; min-width: 0; align-self: flex-end; background: transparent; border: none; outline: none;
+    color: var(--text-1); font-size: 14px; resize: none; max-height: 140px; min-height: 22px;
+    line-height: 1.55; font-family: var(--font-ui);
+  }
+  #msg-input::placeholder { color: var(--text-3); }
+  #send-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: none;
+    background: var(--grad); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: opacity 0.15s, transform 0.1s; font-size: 14px; color: #fff;
+  }
+  #send-btn:hover { opacity: 0.82; }
+  #send-btn:active { transform: scale(0.92); }
+  #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #send-btn svg { display: block; flex-shrink: 0; }
+  #send-btn svg path, #send-btn svg rect { fill: currentColor; }
+  #send-btn.is-stop {
+    background: linear-gradient(135deg, #ff4d6d, #a855f7);
+    color: #fff;
+  }
+
+  #attachment-chips { min-height: 0; }
+  .attach-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px 4px 10px;
+    background: rgba(56,198,244,0.1); border: 1px solid rgba(56,198,244,0.22);
+    border-radius: 8px; font-size: 10px; font-family: var(--font-mono); color: var(--accent-b);
+  }
+  .attach-chip button { padding: 0 5px; margin: 0; background: none; border: none; color: var(--text-3); font-size: 12px; line-height: 1; cursor: pointer; border-radius: 4px; }
+  .attach-chip button:hover { color: var(--accent-err); }
+
+  #attach-txt-btn {
+    width: 36px; height: 36px; padding: 0; border-radius: 50%; flex-shrink: 0;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-2); cursor: pointer; line-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #attach-txt-btn svg { display: block; width: 18px; height: 18px; }
+  #attach-txt-btn:hover { border-color: var(--accent-b); color: var(--accent-b); }
+  #attach-txt-btn[aria-expanded="true"] { border-color: var(--accent-b); color: var(--accent-b); }
+
+  /* Attach menu */
+  #attach-menu-popover {
+    display: none; position: fixed; z-index: 120; min-width: 220px; padding: 6px;
+    border-radius: 12px; background: var(--bg-panel);
+    border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    flex-direction: column; gap: 2px;
+  }
+  #attach-menu-popover.visible { display: flex; }
+  #attach-menu-popover .attach-menu-item {
+    text-align: left; width: 100%; padding: 10px 12px; border: none; border-radius: 8px;
+    background: transparent; color: var(--text-1); font-size: 12px; font-family: var(--font-ui);
+    cursor: pointer; transition: background 0.12s;
+  }
+  #attach-menu-popover .attach-menu-item:hover { background: rgba(56,198,244,0.1); color: var(--accent-b); }
+  #attach-menu-popover .attach-menu-hint { font-size: 10px; font-family: var(--font-mono); color: var(--text-3); padding: 4px 10px 6px; line-height: 1.35; }
+
+  .copy-msg-btn {
+    padding: 4px 10px; font-size: 11px; font-family: var(--font-mono); border-radius: 8px;
+    background: transparent; border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-3); cursor: pointer; font-weight: 500;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+  }
+  .copy-msg-btn:hover { color: var(--text-1); border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); }
+  .copy-msg-btn.copied { color: var(--accent-a); border-color: rgba(0,229,160,0.4); background: rgba(0,229,160,0.06); }
+
+  .user-attach-note { font-size: 10px; font-family: var(--font-mono); color: var(--accent-b); text-align: right; line-height: 1.45; max-width: 100%; opacity: 0.92; }
+  .assistant-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+
+  /* Message files */
+  .user-files { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .assistant-files { margin-top: 10px; }
+  .msg-files-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-width: 520px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    padding: 10px 10px;
+  }
+  .msg-files-list-assistant {
+    border-color: rgba(56,198,244,0.20);
+    background: rgba(56,198,244,0.06);
+  }
+  .msg-file-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .msg-file-name {
+    font-size: 11px; font-family: var(--font-mono); color: var(--text-1);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
+  .msg-file-btn {
+    padding: 5px 9px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .msg-file-btn:hover { border-color: rgba(56,198,244,0.38); color: var(--accent-b); }
+
+  /* Composer attachment chips */
+  .attach-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    border-radius: 999px;
+    padding: 5px 8px 5px 10px;
+    max-width: 100%;
+  }
+  .attach-chip-name {
+    font-size: 10px; font-family: var(--font-mono); color: var(--text-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px;
+  }
+  .attach-chip-x {
+    width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.02);
+    color: var(--text-3);
+    padding: 0;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .attach-chip-x:hover { border-color: rgba(248,113,113,0.35); color: var(--accent-err); }
+
+  /* Modals */
+  #new-chat-overlay, #rename-chat-overlay, #rename-model-overlay {
+    display: none; position: fixed; inset: 0; z-index: 70;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #new-chat-overlay.visible, #rename-chat-overlay.visible, #rename-model-overlay.visible { display: flex; }
+  .new-chat-card { max-width: 400px; width: 100%; margin: 0; }
+  .new-chat-card .field { margin-bottom: 0; }
+  #new-chat-title-input, #rename-chat-title-input, #rename-model-title-input {
+    margin-top: 8px; padding: 10px 12px; background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    color: var(--text-1); font-size: 13px; font-family: var(--font-ui); outline: none;
+    transition: border-color 0.15s;
+  }
+  #new-chat-title-input:focus, #rename-chat-title-input:focus, #rename-model-title-input:focus { border-color: var(--accent-b); }
+
+  .modal-card {
+    max-width: 860px; margin: 0 auto; background: rgba(12,15,20,0.96);
+    border-radius: 16px; overflow: hidden; position: relative;
+  }
+  .modal-card::before {
+    content: ''; position: absolute; inset: -1px;
+    background: var(--grad); border-radius: 17px; z-index: -1; opacity: 0.45;
+  }
+  .modal-header { padding: 16px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .modal-header-title { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+  .modal-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .settings-tabs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .settings-tab {
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-2);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .settings-tab:hover { border-color: rgba(56,198,244,0.38); color: var(--accent-b); }
+  .settings-tab.is-active { border-color: rgba(56,198,244,0.55); color: var(--accent-b); background: rgba(56,198,244,0.10); }
+  .modal-close-btn { padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 8px; color: var(--text-2); font-size: 11px; font-family: var(--font-mono); cursor: pointer; }
+  .modal-close-btn:hover { border-color: var(--accent-err); color: var(--accent-err); }
+  .modal-body { padding: 16px 20px; }
+  .settings-pane[hidden] { display: none !important; }
+  .memory-intro { margin-bottom: 12px; }
+  .memory-title { font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
+  .memory-sub { font-size: 10px; font-family: var(--font-mono); color: var(--text-3); margin-top: 4px; line-height: 1.45; }
+  .memory-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .memory-mini { font-size: 10px; font-family: var(--font-mono); color: var(--text-3); }
+  .memory-file-list { margin-top: 10px; max-height: 46vh; overflow: auto; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 10px 12px; }
+  .memory-file-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 8px; border-radius: 10px; }
+  .memory-file-item:hover { background: rgba(56,198,244,0.08); }
+  .memory-file-name { font-size: 11px; font-family: var(--font-mono); color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .memory-file-path { font-size: 10px; font-family: var(--font-mono); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+  .memory-open-btn { padding: 5px 9px; border-radius: 9px; font-size: 10px; font-family: var(--font-mono); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-2); cursor: pointer; }
+  .memory-open-btn:hover { border-color: rgba(56,198,244,0.38); color: var(--accent-b); }
+
+  /* Wiki links */
+  .assistant-body .md a.md-wikilink { color: var(--accent-a); }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); font-family: var(--font-mono); }
+  input[type="text"], input[type="password"], textarea, select {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px; padding: 9px 12px; font-size: 12px; font-family: var(--font-mono);
+    color: var(--text-1); width: 100%; transition: border-color 0.15s; outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent-b); }
+  input::placeholder, textarea::placeholder { color: var(--text-3); }
+
+  button {
+    background: var(--text-1); color: var(--bg-deep); border: none; border-radius: 10px;
+    padding: 9px 18px; font-size: 12px; font-family: var(--font-ui); font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  button:hover { opacity: 0.86; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .ghost-btn { background: rgba(255,255,255,0.04); color: var(--text-2); border: 1px solid rgba(255,255,255,0.09); font-family: var(--font-mono); font-size: 11px; font-weight: 400; }
+  .ghost-btn:hover { background: rgba(255,255,255,0.07); color: var(--text-1); }
+  .save-btn { background: var(--grad); color: #060809; border: none; font-weight: 700; }
+
+  /* Canvas add menu: undo global `button` styles (defined above). */
+  #canvas-add-menu-popover .canvas-add-menu-item {
+    background: transparent;
+    color: var(--text-1);
+    padding: 10px 12px;
+    font-weight: 400;
+    font-family: var(--font-ui);
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+  #canvas-add-menu-popover .canvas-add-menu-item:hover { opacity: 1; }
+  #canvas-add-menu-popover .canvas-add-menu-item:active { transform: none; }
+
+  .modal-actions { padding: 12px 20px 18px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+  .modal-actions .spacer { flex: 1; }
+
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+  @media (max-width: 720px) { #sidebar { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div id="logo">⬡</div>
+      <div><div id="app-title">Swarm AI</div></div>
+    </div>
+
+    <div id="sidebar-controls">
+      <button type="button" class="sb-btn grad-btn" onclick="openNewChatModal()">+ New</button>
+    </div>
+
+    <div id="search-wrap">
+      <input id="search-box" placeholder="Search chats…" oninput="filterChats(this.value)" />
+    </div>
+
+    <div id="chat-list-shell">
+      <section class="sidebar-split" aria-label="Previous chats">
+        <div class="sidebar-split-header">Previous chats</div>
+        <div class="sidebar-split-body" id="chat-scroll">
+          <div id="chat-list"></div>
+        </div>
+      </section>
+
+      <div class="sidebar-divider" role="separator" aria-hidden="true"></div>
+
+      <section class="sidebar-split" aria-label="Models">
+        <div class="sidebar-split-header">
+          <span>Models</span>
+          <span class="sidebar-split-header-actions">
+            <button type="button" class="sidebar-icon-btn" title="Add model" aria-label="Add model" onclick="onAddModel()">
+              +
+            </button>
+            <button type="button" class="sidebar-icon-btn" title="Import model" aria-label="Import model" onclick="triggerImportModel()">
+              ⇪
+            </button>
+          </span>
+        </div>
+        <div class="sidebar-split-body" id="model-scroll">
+          <div id="model-list"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="sidebar-footer" aria-label="Sidebar actions">
+      <button type="button" class="messages-settings-btn" title="Settings" aria-label="Settings" onclick="openSettingsModal()">⚙</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main id="main">
+    <div id="error-box"></div>
+
+    <div class="messages-pane">
+      <div id="messages">
+        <div id="empty-state">
+          <div class="empty-glyph">⬡</div>
+          <div class="empty-title">Swarm AI</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="composer">
+      <div id="composer-stack">
+        <div id="composer-workspace-slot">
+          <div id="composer-workspace-badge" hidden title="">
+            <span class="composer-ws-icon" aria-hidden="true">📁</span>
+            <span id="composer-workspace-badge-text"></span>
+            <button type="button" id="composer-workspace-badge-dismiss" aria-label="Clear workspace folder" title="Clear workspace folder">×</button>
+          </div>
+        </div>
+        <div id="input-wrap">
+          <div id="attachment-chips"></div>
+          <div id="input-row">
+            <button type="button" id="attach-txt-btn" onclick="toggleAttachMenu(event)" title="Attach files" aria-label="Attach" aria-haspopup="menu" aria-expanded="false">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <textarea id="msg-input" rows="1" placeholder="Send a task to the swarm… (Enter to send, Shift+Enter for newline)" oninput="autoResize(this)"></textarea>
+            <div class="pipeline-dd" id="pipeline-dd-root">
+              <button type="button" id="pipeline-dd-trigger" class="pipeline-dd-trigger" title="Pipeline" aria-haspopup="listbox" aria-expanded="false" aria-controls="pipeline-menu-popover" onclick="togglePipelineMenu(event)">
+                <span id="pipeline-dd-label">Swarm-L 0.1</span>
+                <span class="pipeline-dd-chevron" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" id="send-btn" title="Send" onclick="onSendBtnClick()">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.2L13.5 12H10.2v2.8H5.8V12H2.5L8 3.2z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Attach menu -->
+<div id="attach-menu-popover" role="menu" aria-hidden="true">
+  <button type="button" role="menuitem" class="attach-menu-item" onclick="triggerChatAttachFiles()">Attach files…</button>
+  <button type="button" role="menuitem" class="attach-menu-item" onclick="closeAttachMenu()">Add workspace folder… (soon)</button>
+  <div class="attach-menu-hint">Pick files from disk, or open a folder and insert file contents into the message.</div>
+</div>
+
+<!-- hidden file input for chat attachments -->
+<input type="file" id="chat-attach-input" multiple style="display:none" />
+
+<!-- Pipeline menu -->
+<div id="pipeline-menu-popover" role="listbox" aria-hidden="true" tabindex="-1"></div>
+
+<!-- Canvas: add action block -->
+<div id="canvas-add-menu-popover" role="menu" aria-hidden="true" aria-labelledby="canvas-add-menu-heading" onclick="event.stopPropagation()">
+  <div class="canvas-add-menu-title" id="canvas-add-menu-heading">Add Action block</div>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('giveAll')">
+    <span class="canvas-add-menu-item-name">Give All</span>
+    <span class="canvas-add-menu-item-desc">Send to N agents at once</span>
+  </button>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('designation')">
+    <span class="canvas-add-menu-item-name">Designation</span>
+    <span class="canvas-add-menu-item-desc">Split one task into up to 10 prompts</span>
+  </button>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('collect')">
+    <span class="canvas-add-menu-item-name">Collect</span>
+    <span class="canvas-add-menu-item-desc">Collect N responses into one</span>
+  </button>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('audit')">
+    <span class="canvas-add-menu-item-name">Model</span>
+    <span class="canvas-add-menu-item-desc">Run one model with your system prompt</span>
+  </button>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('loopStart')">
+    <span class="canvas-add-menu-item-name">Loop Start</span>
+    <span class="canvas-add-menu-item-desc">Marks the beginning of a loop</span>
+  </button>
+  <button type="button" role="menuitem" class="canvas-add-menu-item" onclick="addCanvasBlockFromMenu('loopEnd')">
+    <span class="canvas-add-menu-item-name">Loop End</span>
+    <span class="canvas-add-menu-item-desc">Repeats back to Loop Start N times</span>
+  </button>
+</div>
+
+<!-- ── New chat ── -->
+<div id="new-chat-overlay" aria-hidden="true" onclick="closeNewChatModal()">
+  <div class="modal-card new-chat-card" role="dialog" aria-modal="true" aria-labelledby="new-chat-heading" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-title" id="new-chat-heading">New chat</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="new-chat-title-input">Name this chat</label>
+        <input type="text" id="new-chat-title-input" maxlength="80" placeholder="e.g. API design review" autocomplete="off"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewChat();}" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button type="button" class="ghost-btn" onclick="closeNewChatModal()">Cancel</button>
+      <button type="button" class="save-btn" onclick="submitNewChat()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Rename chat ── -->
+<div id="rename-chat-overlay" aria-hidden="true" onclick="closeRenameChatModal()">
+  <div class="modal-card new-chat-card" role="dialog" aria-modal="true" aria-labelledby="rename-chat-heading" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-title" id="rename-chat-heading">Rename chat</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="rename-chat-title-input">Chat name</label>
+        <input type="text" id="rename-chat-title-input" maxlength="80" placeholder="e.g. API design review" autocomplete="off"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();submitRenameChat();}" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button type="button" class="ghost-btn" onclick="closeRenameChatModal()">Cancel</button>
+      <button type="button" class="save-btn" onclick="submitRenameChat()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Rename model ── -->
+<div id="rename-model-overlay" aria-hidden="true" onclick="closeRenameModelModal()">
+  <div class="modal-card new-chat-card" role="dialog" aria-modal="true" aria-labelledby="rename-model-heading" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-title" id="rename-model-heading">Rename model</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="rename-model-title-input">Model name</label>
+        <input type="text" id="rename-model-title-input" maxlength="80" placeholder="e.g. Research swarm" autocomplete="off"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();submitRenameModel();}" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button type="button" class="ghost-btn" onclick="closeRenameModelModal()">Cancel</button>
+      <button type="button" class="save-btn" onclick="submitRenameModel()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settings ── -->
+<div id="settings-overlay" aria-hidden="true" onclick="closeSettingsModal()">
+  <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-heading" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-title" id="settings-heading">Settings</div>
+        <div class="settings-tabs" role="tablist" aria-label="Settings tabs">
+          <button type="button" class="settings-tab is-active" id="settings-tab-api" role="tab" aria-selected="true" onclick="selectSettingsTab('api')">API Keys</button>
+          <button type="button" class="settings-tab" id="settings-tab-memory" role="tab" aria-selected="false" onclick="selectSettingsTab('memory')">Memory</button>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeSettingsModal()">Close</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="settings-pane" id="settings-pane-api">
+        <div class="api-keys-intro">
+          <div class="api-keys-title">API keys</div>
+          <div class="api-keys-sub">Add one or more keys per provider. Saved locally in this browser (via localStorage).</div>
+        </div>
+        <div id="api-keys-root"></div>
+        <div id="api-keys-status" aria-live="polite"></div>
+      </div>
+
+      <div class="settings-pane" id="settings-pane-memory" hidden>
+        <div class="memory-intro">
+          <div class="memory-title">Memory</div>
+          <div class="memory-sub">Attach an Obsidian vault folder so `[[file]]` in chat becomes a link to that Markdown file.</div>
+        </div>
+        <div class="memory-row">
+          <input type="file" id="memory-vault-picker" webkitdirectory directory multiple />
+          <button type="button" class="memory-open-btn" onclick="clearMemoryVault()">Clear</button>
+          <div class="memory-mini" id="memory-vault-status"></div>
+        </div>
+        <div class="memory-file-list" id="memory-file-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Memory file viewer ── -->
+<div id="memory-file-overlay" aria-hidden="true" onclick="closeMemoryFileModal()">
+  <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="memory-file-heading" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-title" id="memory-file-heading">Memory</div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeMemoryFileModal()">Close</button>
+    </div>
+    <div class="modal-body">
+      <div class="memory-mini" id="memory-file-path"></div>
+      <div style="height:10px"></div>
+      <div class="assistant-body"><div class="md" id="memory-file-content"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- hidden file input for model import -->
+<input type="file" id="model-import-input" accept="application/json,.json,.swarm.json"
+  style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;" />
+
+<script>
+// ── State ──
+let PIPELINES = [
+  // intentionally empty — you'll add models via UI later
+];
+
+let selectedPipeline = PIPELINES[0]?.id ?? null;
+let activeChatId = null;
+let renamingChatId = null;
+let renamingModelId = null;
+let appView = "chat"; // "chat" | "canvas"
+/** What the main pane is currently showing (drives sidebar mutual exclusivity). */
+let mainPane = "chat"; // "chat" | "model"
+let canvasZoom = 1;
+/** Screen-space translation of world origin (px). */
+let canvasPanX = 0;
+let canvasPanY = 0;
+let isCanvasPanning = false;
+/** @type {{ id: string, type: string, label: string, x: number, y: number }[]} */
+let canvasBlocks = [];
+/** @type {{ id: string, fromBlockId: string, toBlockId: string, fromPort?: string, toPort?: string }[]} */
+let canvasEdges = [];
+/** First port clicked while wiring: { blockId, port: "in"|"out" } | null */
+let canvasLinkPending = null;
+let canvasEdgesRaf = 0;
+let canvasPanGrab = { sx: 0, sy: 0, px: 0, py: 0 };
+/** @type {{ id: string, sx: number, sy: number, bx: number, by: number } | null} */
+let blockDrag = null;
+let modelRowActivateTimer = null;
+let modelRowActivateId = null;
+
+// ── Persistence (localStorage) ──
+const MODELS_STORAGE_KEY = "swarm_ai_models_v1";
+const SELECTED_MODEL_STORAGE_KEY = "swarm_ai_selected_model_v1";
+const CANVAS_BY_MODEL_STORAGE_KEY = "swarm_ai_canvas_by_model_v1";
+const CHATS_STATE_STORAGE_KEY = "swarm_ai_chats_state_v1";
+
+/** @type {Record<string, any>} */
+let canvasByModel = {};
+
+function safeJsonParse(raw, fallback) {
+  try {
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeModels(models) {
+  if (!Array.isArray(models)) return [];
+  return models
+    .map(m => ({
+      id: String(m?.id ?? ""),
+      name: String(m?.name ?? "").trim() || "Untitled model",
+      tagline: String(m?.tagline ?? "").trim(),
+    }))
+    .filter(m => m.id.length > 0);
+}
+
+function loadModelsFromStorage() {
+  const parsed = safeJsonParse(localStorage.getItem(MODELS_STORAGE_KEY), []);
+  PIPELINES = normalizeModels(parsed);
+
+  const selectedRaw = localStorage.getItem(SELECTED_MODEL_STORAGE_KEY);
+  const selected = selectedRaw ? String(selectedRaw) : "";
+  if (selected && PIPELINES.some(p => p.id === selected)) selectedPipeline = selected;
+  else selectedPipeline = PIPELINES[0]?.id ?? null;
+}
+
+function saveModelsToStorage() {
+  try {
+    localStorage.setItem(MODELS_STORAGE_KEY, JSON.stringify(PIPELINES));
+    if (selectedPipeline) localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, String(selectedPipeline));
+    else localStorage.removeItem(SELECTED_MODEL_STORAGE_KEY);
+  } catch {
+    // ignore (private mode / blocked storage)
+  }
+}
+
+function loadCanvasMapFromStorage() {
+  const parsed = safeJsonParse(localStorage.getItem(CANVAS_BY_MODEL_STORAGE_KEY), {});
+  canvasByModel = parsed && typeof parsed === "object" ? parsed : {};
+}
+
+function saveCanvasMapToStorage() {
+  try {
+    localStorage.setItem(CANVAS_BY_MODEL_STORAGE_KEY, JSON.stringify(canvasByModel));
+  } catch {
+    // ignore
+  }
+}
+
+function getDefaultCanvasState() {
+  return { zoom: 1, panX: 0, panY: 0, blocks: [], edges: [] };
+}
+
+function readCanvasStateForModel(modelId) {
+  const id = String(modelId ?? "");
+  if (!id) return getDefaultCanvasState();
+  const raw = canvasByModel?.[id];
+  const zoom = typeof raw?.zoom === "number" && Number.isFinite(raw.zoom) ? raw.zoom : 1;
+  const panX = typeof raw?.panX === "number" && Number.isFinite(raw.panX) ? raw.panX : 0;
+  const panY = typeof raw?.panY === "number" && Number.isFinite(raw.panY) ? raw.panY : 0;
+  const blocks = Array.isArray(raw?.blocks) ? raw.blocks : [];
+  const edges = Array.isArray(raw?.edges) ? raw.edges : [];
+  return { zoom, panX, panY, blocks, edges };
+}
+
+function inferCanvasBlockKind(b) {
+  const kind = String(b?.kind ?? "").trim();
+  if (kind === "prompt" || kind === "output") return kind;
+
+  const type = String(b?.type ?? "");
+  const label = String(b?.label ?? "").trim().toLowerCase();
+
+  if (type === "prompt" || label === "prompt") return "prompt";
+  if (type === "output" || label === "output") return "output";
+  // Back-compat: older "IO" blocks were labeled "Input / Output"
+  if (type === "io" || label === "input / output" || label === "input/output") return "output";
+
+  return "";
+}
+
+function mapStoredBlockToRuntime(b) {
+  const id = String(b?.id ?? uid());
+  let type = String(b?.type ?? "");
+  if (type === "fanIn") type = "collect";
+  // Back-compat: old single "loop" block becomes Loop Start.
+  if (type === "loop") type = "loopStart";
+  let label = String(b?.label ?? "");
+  if (type === "collect" && (!label || label === "Fan In")) label = "collect";
+  if (type === "loopStart" && (!label || label.toLowerCase() === "loop")) label = "Loop Start";
+  if (type === "loopEnd" && !label) label = "Loop End";
+  if (type === "designation" && !label) label = "Designation";
+  const kind = inferCanvasBlockKind({ ...b, type, label });
+  const x = typeof b?.x === "number" && Number.isFinite(b.x) ? b.x : 0;
+  const y = typeof b?.y === "number" && Number.isFinite(b.y) ? b.y : 0;
+
+  const extra = (b && typeof b === "object") ? { ...b } : {};
+  delete extra.id;
+  delete extra.type;
+  delete extra.label;
+  delete extra.kind;
+  delete extra.x;
+  delete extra.y;
+
+  return {
+    ...extra,
+    id,
+    type,
+    label,
+    kind,
+    x,
+    y,
+  };
+}
+
+function normalizeBlocksArray(blocks) {
+  return Array.isArray(blocks) ? blocks.map(mapStoredBlockToRuntime) : [];
+}
+
+function normalizeEdgesArray(edges) {
+  const normFromPort = (p) => {
+    const s = String(p ?? "").trim();
+    if (s === "in") return "in";
+    if (s === "out" || s.startsWith("out:")) return s;
+    // back-compat / unknown → treat as generic out
+    return "out";
+  };
+  const normToPort = (p) => {
+    const s = String(p ?? "").trim();
+    if (s === "out" || s.startsWith("out:")) return "out";
+    // Only "in" is currently meaningful as a sink port.
+    return "in";
+  };
+  return Array.isArray(edges) ? edges.map(e => ({
+    id: String(e?.id ?? uid()),
+    fromBlockId: String(e?.fromBlockId ?? e?.fromId ?? "").trim(),
+    toBlockId: String(e?.toBlockId ?? e?.toId ?? "").trim(),
+    fromPort: normFromPort(e?.fromPort ?? "out"),
+    toPort: normToPort(e?.toPort ?? "in"),
+  })).filter(e => e.fromBlockId && e.toBlockId && e.fromBlockId !== e.toBlockId) : [];
+}
+
+function snapshotFlowForModel(modelId) {
+  const s = readCanvasStateForModel(modelId);
+  return {
+    blocks: normalizeBlocksArray(s.blocks),
+    edges: normalizeEdgesArray(s.edges),
+  };
+}
+
+function applyCanvasStateToRuntime(state) {
+  const s = state || getDefaultCanvasState();
+  canvasZoom = s.zoom;
+  canvasPanX = s.panX;
+  canvasPanY = s.panY;
+  canvasBlocks = normalizeBlocksArray(s.blocks);
+  canvasEdges = normalizeEdgesArray(s.edges);
+}
+
+function persistCurrentCanvasStateForSelectedModel() {
+  const id = selectedPipeline ? String(selectedPipeline) : "";
+  if (!id) return;
+  canvasByModel[id] = {
+    zoom: canvasZoom,
+    panX: canvasPanX,
+    panY: canvasPanY,
+    blocks: canvasBlocks,
+    edges: canvasEdges,
+  };
+  saveCanvasMapToStorage();
+}
+
+let canvasPersistRaf = 0;
+function schedulePersistCanvasStateForSelectedModel() {
+  if (!selectedPipeline) return;
+  if (canvasPersistRaf) cancelAnimationFrame(canvasPersistRaf);
+  canvasPersistRaf = requestAnimationFrame(() => {
+    canvasPersistRaf = 0;
+    persistCurrentCanvasStateForSelectedModel();
+  });
+}
+
+function loadCanvasRuntimeForSelectedModel() {
+  const id = selectedPipeline ? String(selectedPipeline) : "";
+  if (!id) {
+    applyCanvasStateToRuntime(getDefaultCanvasState());
+    return;
+  }
+  applyCanvasStateToRuntime(readCanvasStateForModel(id));
+}
+
+function cancelPendingModelRowActivation() {
+  if (modelRowActivateTimer) clearTimeout(modelRowActivateTimer);
+  modelRowActivateTimer = null;
+  modelRowActivateId = null;
+}
+
+function activateModelRow(id) {
+  // If we're currently editing a canvas for another model, snapshot it before switching selection.
+  if (appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+
+  selectPipeline(id);
+  loadCanvasRuntimeForSelectedModel();
+  mainPane = "model";
+  renderSidebar();
+  renderModels();
+  enterCanvasView();
+}
+
+function onModelRowClick(id) {
+  // Delay single-click activation so double-click rename doesn't also navigate.
+  if (modelRowActivateTimer && modelRowActivateId === id) return;
+  cancelPendingModelRowActivation();
+  modelRowActivateId = id;
+  modelRowActivateTimer = setTimeout(() => {
+    modelRowActivateTimer = null;
+    modelRowActivateId = null;
+    activateModelRow(id);
+  }, 220);
+}
+
+function onModelRowDblClick(id) {
+  cancelPendingModelRowActivation();
+  openRenameModelModal(id);
+}
+
+function selectModelFromSidebar(id) {
+  // Kept for back-compat; model rows use delayed activation via onModelRowClick.
+  activateModelRow(id);
+}
+
+// Seed some demo chats
+let chats = [
+  { id: "c1", title: "Refactor authentication module", preview: "Swarm-L 0.1 · 3 messages", ts: Date.now() - 1000 * 60 * 5 },
+  { id: "c2", title: "Design REST API for user service", preview: "Swarm-RBD 0.2 · 7 messages", ts: Date.now() - 1000 * 60 * 60 },
+  { id: "c3", title: "Code review — payment gateway", preview: "Swarm-L 0.1 · 2 messages", ts: Date.now() - 1000 * 60 * 60 * 3 },
+  { id: "c4", title: "Draft technical spec for v2 API", preview: "Swarm-CDX 0.1 · 5 messages", ts: Date.now() - 1000 * 60 * 60 * 24 },
+  { id: "c5", title: "Optimize database queries", preview: "Swarm-SM 0.1 · 1 message",  ts: Date.now() - 1000 * 60 * 60 * 48 },
+];
+
+// Messages per chat (UI demo — no real content)
+let chatMessages = {
+  c1: [
+    { role: "user",      text: "Can you refactor the authentication module to use JWT instead of session cookies?" },
+    { role: "assistant", text: "I'll analyse the current module and produce a refactored version using JWT. Here's the plan:\n\n1. Replace `express-session` with `jsonwebtoken`\n2. Move token issuance to `/auth/login`\n3. Add a middleware `verifyToken` for protected routes\n4. Store refresh tokens in an httpOnly cookie\n\nLet me draft the implementation…" },
+    { role: "user",      text: "Looks great. Can you also add refresh token rotation?" },
+  ],
+  c2: [
+    { role: "user",      text: "Design a REST API for a user service — CRUD + auth endpoints." },
+    { role: "assistant", text: "Here's the proposed API surface:\n\n**Auth**\n- `POST /auth/register`\n- `POST /auth/login`\n- `POST /auth/refresh`\n- `POST /auth/logout`\n\n**Users**\n- `GET /users/:id`\n- `PATCH /users/:id`\n- `DELETE /users/:id`\n\nAll protected routes require `Authorization: Bearer <token>`." },
+  ],
+};
+
+function normalizeChatRow(c) {
+  const id = String(c?.id ?? "").trim();
+  return {
+    id,
+    title: String(c?.title ?? "").trim() || "Untitled",
+    preview: String(c?.preview ?? ""),
+    ts: typeof c?.ts === "number" && Number.isFinite(c.ts) ? c.ts : Date.now(),
+  };
+}
+
+function normalizeChatMessage(m) {
+  const role = m?.role === "assistant" ? "assistant" : "user";
+  const text = String(m?.text ?? "");
+  const out = { role, text };
+  if (m && typeof m === "object" && Array.isArray(m.files)) {
+    out.files = m.files
+      .filter(f => f && typeof f === "object")
+      .map(f => ({
+        name: String(f.name ?? "file"),
+        mime: String(f.mime ?? "application/octet-stream"),
+        size: typeof f.size === "number" ? f.size : undefined,
+        encoding: String(f.encoding ?? "utf-8"),
+        content: String(f.content ?? ""),
+        source: String(f.source ?? ""),
+      }))
+      .filter(f => f.name && f.content != null);
+  }
+  if (role === "assistant" && m && typeof m === "object" && m.orchestraStatusObj && typeof m.orchestraStatusObj === "object") {
+    // Persist the collapsible “Thinking” payload.
+    out.orchestraStatusObj = m.orchestraStatusObj;
+  }
+  return out;
+}
+
+function saveChatsStateToStorage() {
+  try {
+    localStorage.setItem(
+      CHATS_STATE_STORAGE_KEY,
+      JSON.stringify({ chats, messages: chatMessages, activeChatId })
+    );
+  } catch {
+    // ignore (private mode / blocked storage)
+  }
+}
+
+function loadChatsStateFromStorage() {
+  const raw = localStorage.getItem(CHATS_STATE_STORAGE_KEY);
+  if (!raw) return;
+  const parsed = safeJsonParse(raw, null);
+  if (!parsed || typeof parsed !== "object") return;
+
+  const list = Array.isArray(parsed.chats)
+    ? parsed.chats.map(normalizeChatRow).filter(c => c.id.length > 0)
+    : [];
+  const msgsRaw = parsed.messages && typeof parsed.messages === "object" ? parsed.messages : {};
+
+  chats = list;
+  chatMessages = {};
+  for (const c of list) {
+    const arr = msgsRaw[c.id];
+    chatMessages[c.id] = Array.isArray(arr) ? arr.map(normalizeChatMessage) : [];
+  }
+
+  const savedActive = parsed.activeChatId != null ? String(parsed.activeChatId) : "";
+  activeChatId =
+    savedActive && list.some(c => c.id === savedActive)
+      ? savedActive
+      : (list[0]?.id ?? null);
+}
+
+// ── Utils ──
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now() + "_" + Math.random().toString(16).slice(2); }
+
+// ── Attachments (chat + orchestra carry) ──
+/** @type {{ id: string, name: string, mime: string, size: number, encoding: "utf-8"|"base64", content: string }[]} */
+let composerFiles = [];
+
+function looksTextLike(name, mime) {
+  const n = String(name || "").toLowerCase();
+  const m = String(mime || "").toLowerCase();
+  if (m.startsWith("text/")) return true;
+  if (m.includes("json") || m.includes("markdown") || m.includes("yaml") || m.includes("xml")) return true;
+  if (/\.(md|markdown|txt|json|yaml|yml|xml|csv|ts|tsx|js|jsx|py|go|rs|java|kt|rb|php|c|cc|cpp|h|hpp|cs|sh|ps1|toml|ini|log)$/i.test(n)) return true;
+  return false;
+}
+
+function toBase64FromArrayBuffer(buf) {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function fileToComposerAttachment(file) {
+  const name = String(file?.name ?? "file");
+  const mime = String(file?.type ?? "application/octet-stream") || "application/octet-stream";
+  const size = Number(file?.size ?? 0) || 0;
+  const id = uid();
+
+  // Keep .md and .json as text 100%.
+  const forceText = /\.(md|markdown|json)$/i.test(name);
+  const isText = forceText || looksTextLike(name, mime);
+
+  if (isText) {
+    const content = await file.text().catch(() => "");
+    return { id, name, mime, size, encoding: "utf-8", content: String(content ?? ""), source: "user" };
+  }
+  const buf = await file.arrayBuffer().catch(() => new ArrayBuffer(0));
+  const content = toBase64FromArrayBuffer(buf);
+  return { id, name, mime, size, encoding: "base64", content, source: "user" };
+}
+
+function renderComposerFileChips() {
+  const root = document.getElementById("attachment-chips");
+  if (!root) return;
+  if (!composerFiles.length) {
+    root.innerHTML = "";
+    return;
+  }
+  root.innerHTML = composerFiles.map(f => {
+    const label = `${escHtml(f.name)}${f.size ? ` · ${Math.round(f.size / 1024)}kb` : ""}`;
+    return `<div class="attach-chip" data-attach-id="${escHtml(f.id)}">
+      <span class="attach-chip-name" title="${escHtml(f.name)}">${label}</span>
+      <button type="button" class="attach-chip-x" title="Remove" aria-label="Remove" onclick="removeComposerFile('${escHtml(f.id)}')">×</button>
+    </div>`;
+  }).join("");
+}
+
+function removeComposerFile(id) {
+  composerFiles = composerFiles.filter(f => f.id !== id);
+  renderComposerFileChips();
+}
+
+function clearComposerFiles() {
+  composerFiles = [];
+  renderComposerFileChips();
+}
+
+function triggerChatAttachFiles() {
+  closeAttachMenu();
+  const input = document.getElementById("chat-attach-input");
+  if (input) input.click();
+}
+
+function formatFilesForPrompt(files, label) {
+  const arr = Array.isArray(files) ? files : [];
+  if (!arr.length) return "";
+  const maxTotalChars = 180000;
+  const maxPerText = 50000;
+  const maxPerB64 = 120000;
+  let used = 0;
+  const lines = [];
+  lines.push(`${label || "Files"} (verbatim; may be truncated):`);
+  for (const f of arr) {
+    const name = String(f?.name ?? "file");
+    const mime = String(f?.mime ?? "application/octet-stream");
+    const encoding = String(f?.encoding ?? "utf-8");
+    const header = `--- ${name} (${mime}; ${encoding}) ---`;
+    let body = String(f?.content ?? "");
+    const cap = encoding === "base64" ? maxPerB64 : maxPerText;
+    if (body.length > cap) body = body.slice(0, cap) + `\n\n[TRUNCATED: ${body.length - cap} chars omitted]`;
+    if (used + header.length + body.length > maxTotalChars) {
+      lines.push(header);
+      lines.push("[TRUNCATED: too many files/bytes to include]");
+      break;
+    }
+    lines.push(header);
+    lines.push(body);
+    used += header.length + body.length;
+  }
+  return "\n\n" + lines.join("\n") + "\n";
+}
+
+function carryFiles(carry) {
+  if (!carry || typeof carry !== "object") return [];
+  return Array.isArray(carry.files) ? carry.files : [];
+}
+
+function mergeFiles(a, b) {
+  const aa = Array.isArray(a) ? a : [];
+  const bb = Array.isArray(b) ? b : [];
+  return [...aa, ...bb].filter(Boolean);
+}
+
+function extractFilesFromAssistantText(text) {
+  const src = String(text ?? "");
+  const found = [];
+
+  // 1) ```file filename.ext\n...\n```
+  const fileFence = /```file[ \t]+([^\n\r]+)[\r\n]([\s\S]*?)```/g;
+  for (const m of src.matchAll(fileFence)) {
+    const name = String(m?.[1] ?? "").trim();
+    const content = String(m?.[2] ?? "");
+    if (!name) continue;
+    const mime = /\.(md|markdown)$/i.test(name) ? "text/markdown"
+      : /\.json$/i.test(name) ? "application/json"
+      : "text/plain";
+    found.push({ id: uid(), name, mime, size: content.length, encoding: "utf-8", content, source: "ai" });
+  }
+
+  // 2) ```json { "swarmFiles": [...] } ```
+  const jsonFence = /```json[\r\n]([\s\S]*?)```/g;
+  for (const m of src.matchAll(jsonFence)) {
+    const body = String(m?.[1] ?? "").trim();
+    if (!body) continue;
+    try {
+      const j = JSON.parse(body);
+      const arr = Array.isArray(j?.swarmFiles) ? j.swarmFiles : null;
+      if (!arr) continue;
+      for (const f of arr) {
+        const name = String(f?.name ?? "").trim();
+        if (!name) continue;
+        const encoding = String(f?.encoding ?? "utf-8");
+        const content = String(f?.content ?? "");
+        const mime = String(f?.mime ?? (/\.(md|markdown)$/i.test(name) ? "text/markdown" : /\.json$/i.test(name) ? "application/json" : "text/plain"));
+        found.push({ id: uid(), name, mime, size: content.length, encoding: encoding === "base64" ? "base64" : "utf-8", content, source: "ai" });
+      }
+    } catch {}
+  }
+
+  return found;
+}
+
+function downloadJson(filename, obj) {
+  const data = JSON.stringify(obj, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function safeFilename(s) {
+  return String(s ?? "model")
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80) || "model";
+}
+
+function exportModelFromSidebar(e, id) {
+  e.stopPropagation();
+  exportModel(id);
+}
+
+function exportModel(modelId) {
+  const mid = String(modelId ?? "");
+  const m = PIPELINES.find(p => p.id === mid);
+  if (!m) return;
+  // Snapshot latest canvas if exporting current model.
+  if (selectedPipeline === mid && appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+  const state = readCanvasStateForModel(mid);
+  const payload = {
+    kind: "swarm_ai_model_export",
+    version: 1,
+    exportedAt: Date.now(),
+    model: { name: m.name, tagline: m.tagline },
+    canvas: state,
+  };
+  downloadJson(`${safeFilename(m.name)}.swarm.json`, payload);
+}
+
+function triggerImportModel() {
+  const input = document.getElementById("model-import-input");
+  if (!input) return;
+  try {
+    // Some browsers ignore .click() on fully hidden inputs; showPicker() is more reliable when available.
+    if (typeof input.showPicker === "function") input.showPicker();
+    else input.click();
+  } catch {
+    try { input.click(); } catch {}
+  }
+}
+
+function remapCanvasStateIds(canvas) {
+  const c = canvas || getDefaultCanvasState();
+  const blocks = Array.isArray(c.blocks) ? c.blocks : [];
+  const edges = Array.isArray(c.edges) ? c.edges : [];
+  const idMap = new Map();
+  for (const b of blocks) {
+    const oldId = String(b?.id ?? "");
+    if (!oldId) continue;
+    idMap.set(oldId, uid());
+  }
+  const newBlocks = blocks.map(b => {
+    const oldId = String(b?.id ?? "");
+    const nid = idMap.get(oldId) || uid();
+    return { ...(b && typeof b === "object" ? b : {}), id: nid };
+  });
+  const newEdges = edges.map(e => {
+    const fromOld = String(e?.fromBlockId ?? e?.fromId ?? "");
+    const toOld = String(e?.toBlockId ?? e?.toId ?? "");
+    const fromBlockId = idMap.get(fromOld) || fromOld;
+    const toBlockId = idMap.get(toOld) || toOld;
+    return {
+      ...(e && typeof e === "object" ? e : {}),
+      id: uid(),
+      fromBlockId,
+      toBlockId,
+    };
+  }).filter(e => e.fromBlockId && e.toBlockId && e.fromBlockId !== e.toBlockId);
+  return {
+    zoom: typeof c.zoom === "number" ? c.zoom : 1,
+    panX: typeof c.panX === "number" ? c.panX : 0,
+    panY: typeof c.panY === "number" ? c.panY : 0,
+    blocks: newBlocks,
+    edges: newEdges,
+  };
+}
+
+async function importModelFromFile(file) {
+  const text = await file.text().catch(() => "");
+  const parsed = safeJsonParse(text, null);
+  if (!parsed || typeof parsed !== "object") throw new Error("Invalid JSON file.");
+  if (String(parsed.kind || "") !== "swarm_ai_model_export") throw new Error("Not a Swarm model export file.");
+  const name = String(parsed.model?.name ?? "Imported model").trim() || "Imported model";
+  const tagline = String(parsed.model?.tagline ?? "imported").trim();
+  const newId = `model-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const canvas = remapCanvasStateIds(parsed.canvas);
+
+  PIPELINES = [...PIPELINES, { id: newId, name, tagline }];
+  canvasByModel[newId] = canvas;
+  saveCanvasMapToStorage();
+  selectedPipeline = newId;
+  saveModelsToStorage();
+  syncPipelineLabel();
+  mainPane = "model";
+  renderSidebar();
+  renderModels();
+  loadCanvasRuntimeForSelectedModel();
+  enterCanvasView();
+}
+function fmtTime(ts) {
+  const d = new Date(ts), now = new Date();
+  const diffH = (now - d) / 3600000;
+  if (diffH < 24) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diffH < 48) return "Yesterday";
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+function escHtml(s) {
+  return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+
+// ── Sidebar rendering ──
+function renderSidebar(filter) {
+  const q = (filter || document.getElementById("search-box").value || "").toLowerCase().trim();
+  const list = document.getElementById("chat-list");
+
+  const todayChats  = chats.filter(c => (Date.now() - c.ts) < 86400000  && (!q || c.title.toLowerCase().includes(q)));
+  const olderChats  = chats.filter(c => (Date.now() - c.ts) >= 86400000 && (!q || c.title.toLowerCase().includes(q)));
+
+  let html = "";
+  if (todayChats.length) {
+    html += `<div class="chat-section-label">Today</div>`;
+    html += todayChats.map(c => chatItemHtml(c)).join("");
+  }
+  if (olderChats.length) {
+    html += `<div class="chat-section-label">Earlier</div>`;
+    html += olderChats.map(c => chatItemHtml(c)).join("");
+  }
+  if (!todayChats.length && !olderChats.length) {
+    html = `<div style="padding:18px 10px;font-size:11px;color:var(--text-3);font-family:var(--font-mono);">No chats found.</div>`;
+  }
+  list.innerHTML = html;
+}
+function filterChats(v) { renderSidebar(v); }
+
+function renderModels() {
+  const list = document.getElementById("model-list");
+  if (!list) return;
+  if (!PIPELINES.length) {
+    list.innerHTML = `<div style="padding:12px 10px 10px;font-size:11px;color:var(--text-3);font-family:var(--font-mono);">No models yet. Click <span style="color:var(--accent-b);font-weight:600;">+</span> to add one.</div>`;
+    return;
+  }
+  list.innerHTML = PIPELINES.map(p => {
+    const active = (mainPane === "model" && p.id === selectedPipeline) ? " active" : "";
+    return `<div class="chat-item model-item${active}" onclick="onModelRowClick('${p.id}')" ondblclick="onModelRowDblClick('${p.id}')">
+      <div class="chat-item-text">
+        <div class="chat-item-title">${escHtml(p.name)}</div>
+        <div class="chat-item-meta">${escHtml(p.tagline)}</div>
+      </div>
+      <button class="chat-item-exp" title="Export model" onclick="exportModelFromSidebar(event,'${p.id}')">⤓</button>
+      <button class="chat-item-del" title="Delete model" onclick="deleteModel(event,'${p.id}')">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function chatItemHtml(c) {
+  const active = (mainPane === "chat" && c.id === activeChatId) ? " active" : "";
+  return `<div class="chat-item${active}" onclick="selectChat('${c.id}')" ondblclick="openRenameChatModal('${c.id}')">
+    <div class="chat-item-text">
+      <div class="chat-item-title">${escHtml(c.title)}</div>
+      <div class="chat-item-meta">${escHtml(c.preview || fmtTime(c.ts))}</div>
+    </div>
+    <button class="chat-item-del" title="Delete chat" onclick="deleteChat(event,'${c.id}')">✕</button>
+  </div>`;
+}
+
+function selectChat(id) {
+  activeChatId = id;
+  mainPane = "chat";
+  exitCanvasView({ skipRender: true });
+  renderSidebar();
+  renderModels();
+  renderMessages();
+  saveChatsStateToStorage();
+}
+
+function deleteChat(e, id) {
+  e.stopPropagation();
+  const wasActive = activeChatId === id;
+  chats = chats.filter(c => c.id !== id);
+  delete chatMessages[id];
+  if (wasActive) {
+    activeChatId = chats.length ? chats[0].id : null;
+    exitCanvasView({ skipRender: true });
+  }
+  renderSidebar();
+  renderModels();
+  renderMessages();
+  saveChatsStateToStorage();
+}
+
+// ── Messages rendering ──
+function renderMessages() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+  if (appView === "canvas") {
+    pane.className = "canvas-view";
+    pane.innerHTML = `
+      <div class="canvas-stage" id="canvas-stage">
+        <div class="canvas-world" id="canvas-world">
+          <div class="canvas-bg" aria-hidden="true"></div>
+          <svg class="canvas-edges-svg" id="canvas-edges-svg" viewBox="0 0 8000 6000" width="8000" height="6000" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="canvas-blocks-root" id="canvas-blocks-root"></div>
+        </div>
+      </div>
+      <button type="button" id="canvas-add-btn" class="canvas-add-btn" title="Add" aria-label="Add" aria-haspopup="menu" aria-expanded="false" aria-controls="canvas-add-menu-popover" onclick="toggleCanvasAddMenu(event)">+</button>
+    `;
+    pane.setAttribute("aria-label", "Canvas");
+    pane.setAttribute("role", "region");
+    applyCanvasTransform();
+    renderCanvasBlocks();
+    return;
+  }
+
+  pane.className = "";
+  pane.removeAttribute("aria-label");
+  pane.removeAttribute("role");
+  const msgs = activeChatId && chatMessages[activeChatId];
+  if (!msgs || !msgs.length) {
+    pane.innerHTML = `<div id="empty-state"><div class="empty-glyph">⬡</div><div class="empty-title">Swarm AI</div></div>`;
+    return;
+  }
+  pane.innerHTML = msgs.map(m => {
+    if (m.role === "user") {
+      const files = Array.isArray(m.files) && m.files.length
+        ? `<div class="user-files">${renderMessageFilesHtml(m.files)}</div>`
+        : "";
+      return `<div class="msg-row msg-row-user">
+        <div class="msg-stage">
+          <div class="user-stack">
+            <div class="user-bubble">${escHtml(m.text)}</div>
+            ${files}
+          </div>
+        </div>
+      </div>`;
+    }
+    const orch = m.orchestraStatusObj
+      ? renderOrchestraStatusHtml(m.orchestraStatusObj)
+      : (m.orchestraStatus ? `<div class="orchestra-wait" aria-live="polite" aria-atomic="true">${escHtml(m.orchestraStatus)}</div>` : "");
+    const bodyTxt = String(m.text ?? "");
+    const body = bodyTxt.trim()
+      ? `<div class="assistant-body">${renderMarkdownSafe(bodyTxt)}</div>`
+      : "";
+    const copyPayload = JSON.stringify(bodyTxt);
+    const actions = bodyTxt.trim()
+      ? `<div class="assistant-actions">
+            <button type="button" class="copy-msg-btn" onclick="copyMsg(this, ${copyPayload})">Copy</button>
+          </div>`
+      : "";
+    const files = Array.isArray(m.files) && m.files.length
+      ? `<div class="assistant-files">${renderMessageFilesHtml(m.files, { variant: "assistant" })}</div>`
+      : "";
+    return `<div class="msg-row msg-row-assistant">
+      <div class="msg-stage">
+        <div class="assistant-cluster">
+          ${orch}
+          ${body}
+          ${files}
+          ${actions}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  pane.scrollTop = pane.scrollHeight;
+}
+
+function renderMessageFilesHtml(files, opts) {
+  const o = opts || {};
+  const variant = String(o.variant || "user");
+  const cls = variant === "assistant" ? "msg-files-list msg-files-list-assistant" : "msg-files-list";
+  const arr = Array.isArray(files) ? files : [];
+  const items = arr.map((f, idx) => {
+    const name = String(f?.name ?? `file_${idx + 1}`);
+    const mime = String(f?.mime ?? "application/octet-stream");
+    const encoding = String(f?.encoding ?? "utf-8");
+    const content = String(f?.content ?? "");
+    const label = `${name}${mime ? ` · ${mime}` : ""}${encoding === "base64" ? " · base64" : ""}`;
+    const payload = JSON.stringify({ name, mime, encoding, content });
+    return `<div class="msg-file-row">
+      <div class="msg-file-name" title="${escHtml(label)}">${escHtml(name)}</div>
+      <button type="button" class="msg-file-btn" onclick='downloadMessageFile(${payload})'>Download</button>
+    </div>`;
+  }).join("");
+  return `<div class="${cls}">${items}</div>`;
+}
+
+function downloadMessageFile(f) {
+  const name = String(f?.name ?? "file.txt");
+  const mime = String(f?.mime ?? "application/octet-stream");
+  const encoding = String(f?.encoding ?? "utf-8");
+  const content = String(f?.content ?? "");
+  let blob;
+  if (encoding === "base64") {
+    const bin = atob(content);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    blob = new Blob([bytes], { type: mime });
+  } else {
+    blob = new Blob([content], { type: mime || "text/plain;charset=utf-8" });
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function renderOrchestraStatusHtml(statusObj) {
+  const s = statusObj || {};
+  const open = s.open !== false;
+  const iters = Array.isArray(s.iterations) ? s.iterations : [];
+
+  const esc = escHtml;
+  const line = (txt) => esc(String(txt ?? ""));
+
+  const modelMark = (m) => {
+    if (m?.state === "error") return `<span class="orch-x">✕</span>`;
+    if (m?.state === "done") return `<span class="orch-ok">✓</span>`;
+    return "0/1";
+  };
+
+  const actionHeader = (a) => {
+    const n = Number(a?.done ?? 0);
+    const t = Number(a?.total ?? 0);
+    return `${String(a?.name ?? "Action")} ${n}/${t}`;
+  };
+
+  const renderIter = (iter, idx) => {
+    const loopLine = iter?.loopLine ? String(iter.loopLine) : `Loop ${idx + 1}`;
+    const actions = Array.isArray(iter?.actions) ? iter.actions : [];
+    const bodyLines = [];
+
+    bodyLines.push(line(loopLine));
+    actions.forEach((a) => {
+      const models = Array.isArray(a?.models) ? a.models : [];
+      if (a?.compact && models.length === 1) {
+        const mm = models[0];
+        bodyLines.push(line(`│Model: ${String(mm?.name ?? "model")} `) + modelMark(mm));
+        return;
+      }
+      bodyLines.push(line(`│[${actionHeader(a)}]`));
+      models.forEach((mm) => {
+        bodyLines.push(line(`  │[${String(mm?.name ?? "model")}] `) + modelMark(mm));
+      });
+    });
+    return bodyLines.join("\n");
+  };
+
+  const tree = iters.map(renderIter).join("\n\n");
+
+  return `
+    <div class="orchestra-wait" aria-live="polite" aria-atomic="true">
+      <details ${open ? "open" : ""}>
+        <summary>Thinking</summary>
+        <div class="orch-tree">${tree || "…"}</div>
+      </details>
+    </div>
+  `;
+}
+
+function renderMarkdownSafe(text) {
+  const src = String(text ?? "");
+  if (!src.trim()) return "";
+
+  const escape = (s) => String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;");
+
+  // Split into fenced code blocks.
+  const parts = src.split(/```/g);
+  const out = parts.map((chunk, idx) => {
+    if (idx % 2 === 1) {
+      return `<pre><code>${escape(chunk.replace(/^\w+\n/, ""))}</code></pre>`;
+    }
+
+    let s = escape(chunk);
+    // Headings
+    s = s.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+    s = s.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+    s = s.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+    // Lists (- item)
+    s = s.replace(/^(?:- .+(?:\n|$))+?/gm, (block) => {
+      const items = block.trim().split("\n").map(l => l.replace(/^- /, "").trim()).filter(Boolean);
+      if (!items.length) return block;
+      return `<ul>${items.map(it => `<li>${it}</li>`).join("")}</ul>`;
+    });
+    // Bold / italic / inline code
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    // Links [text](url)
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, `<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>`);
+    // Obsidian-style wiki links [[file name]]
+    s = s.replace(/\[\[([^\]]+)\]\]/g, `<a href="#" class="md-wikilink" data-wikilink="$1">[[$1]]</a>`);
+
+    // Paragraphs / line breaks
+    const lines = s.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+    return lines.map(p => {
+      // If it's already a block element, keep it.
+      if (/^\s*<(h1|h2|h3|ul|pre)/.test(p)) return p;
+      return `<p>${p.replace(/\n/g, "<br>")}</p>`;
+    }).join("");
+  }).join("");
+
+  return `<div class="md">${out}</div>`;
+}
+
+function copyMsg(btn, text) {
+  navigator.clipboard.writeText(text).catch(() => {});
+  btn.textContent = "Copied!";
+  btn.classList.add("copied");
+  setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1600);
+}
+
+/** Replaces `{{prompt}}` with the user's original chat message (use in panel prompt fields). */
+function substitutePromptTokens(template, originalUserPrompt) {
+  return String(template ?? "").replaceAll("{{prompt}}", String(originalUserPrompt ?? ""));
+}
+
+/** Matches .canvas-block-tab min dimensions (world px). */
+const CANVAS_TAB_W = 92;
+const CANVAS_TAB_H = 52;
+const COLLECT_TAB_W = 72;
+const COLLECT_TAB_H = 44;
+
+function getRawApiKeyAt(providerId, keyIdx) {
+  const arr = loadApiKeys()[String(providerId)] || [];
+  const i = Math.max(0, Number(keyIdx) || 0);
+  return String(arr[i] ?? "").trim();
+}
+
+async function callChatModel(providerId, keyIdx, model, systemText, userText, originalChatForTokens) {
+  const key = getRawApiKeyAt(providerId, keyIdx);
+  if (!key) throw new Error(`No API key configured for provider "${providerId}". Open Settings and add a key.`);
+  const m = String(model ?? "").trim();
+  if (!m) throw new Error("Model name is empty in the canvas block.");
+
+  const tokenBase = originalChatForTokens == null ? "" : String(originalChatForTokens);
+  let sysRaw = String(systemText ?? "");
+  // Expand Obsidian-style memory links inside system prompts.
+  sysRaw = expandWikiLinksToContent(sysRaw);
+  // Automatically include the vault's /Permanent folder in every system prompt.
+  if (memoryPermanentBundle) {
+    sysRaw = `${sysRaw}\n\n# Permanent memory\n${memoryPermanentBundle}\n`;
+  }
+  sysRaw = sysRaw.trim() || "You are a helpful assistant.";
+  const sys = substitutePromptTokens(sysRaw, tokenBase);
+  const user = substitutePromptTokens(String(userText ?? ""), tokenBase);
+
+  const withTimeout = async (fn, ms, label) => {
+    const controller = new AbortController();
+    const stopListener = () => controller.abort();
+    try {
+      if (orchestraAbortCtl?.signal?.aborted) controller.abort();
+      else orchestraAbortCtl?.signal?.addEventListener("abort", stopListener, { once: true });
+    } catch {}
+    const t = setTimeout(() => controller.abort(), ms);
+    try {
+      return await fn(controller.signal);
+    } catch (err) {
+      if (err && (err.name === "AbortError" || String(err).includes("AbortError"))) {
+        if (orchestraStopRequested) throw new Error("Stopped.");
+        throw new Error(`${label} timed out after ${Math.round(ms / 1000)}s`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(t);
+      try { orchestraAbortCtl?.signal?.removeEventListener("abort", stopListener); } catch {}
+    }
+  };
+
+  const timeoutMs = 240_000;
+
+  const errBody = async (res) => {
+    const t = await res.text().catch(() => "");
+    try {
+      const j = JSON.parse(t);
+      return j?.error?.message || j?.message || t || res.statusText;
+    } catch {
+      return t || res.statusText;
+    }
+  };
+
+  if (providerId === "openrouter") {
+    return await withTimeout(async (signal) => {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": (typeof location !== "undefined" && location.origin) ? location.origin : "http://localhost",
+          "X-Title": "Swarm AI",
+        },
+        body: JSON.stringify({
+          model: m,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user },
+          ],
+        }),
+        signal,
+      });
+      if (!res.ok) throw new Error(await errBody(res));
+      const data = await res.json();
+      return String(data?.choices?.[0]?.message?.content ?? "").trim();
+    }, timeoutMs, "OpenRouter");
+  }
+
+  if (providerId === "openai") {
+    return await withTimeout(async (signal) => {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: m,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user },
+          ],
+        }),
+        signal,
+      });
+      if (!res.ok) throw new Error(await errBody(res));
+      const data = await res.json();
+      return String(data?.choices?.[0]?.message?.content ?? "").trim();
+    }, timeoutMs, "OpenAI");
+  }
+
+  if (providerId === "anthropic") {
+    return await withTimeout(async (signal) => {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: m,
+          max_tokens: 4096,
+          system: sys,
+          messages: [{ role: "user", content: user }],
+        }),
+        signal,
+      });
+      if (!res.ok) throw new Error(await errBody(res));
+      const data = await res.json();
+      const parts = data?.content;
+      if (Array.isArray(parts)) {
+        const t = parts.map(p => String(p?.text ?? "")).join("");
+        return t.trim();
+      }
+      return "";
+    }, timeoutMs, "Anthropic");
+  }
+
+  if (providerId === "google_ai_studio") {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(key)}`;
+    return await withTimeout(async (signal) => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: sys }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+        }),
+        signal,
+      });
+      if (!res.ok) throw new Error(await errBody(res));
+      const data = await res.json();
+      const parts = data?.candidates?.[0]?.content?.parts;
+      if (Array.isArray(parts)) {
+        return parts.map(p => String(p?.text ?? "")).join("").trim();
+      }
+      return "";
+    }, timeoutMs, "Google AI Studio");
+  }
+
+  throw new Error(`Unsupported provider: ${providerId}`);
+}
+
+function getBlockPortLayout(b) {
+  const type = String(b?.type ?? "");
+  const kind = inferCanvasBlockKind(b);
+  if (type === "giveAll" || type === "audit") return { in: true, out: true };
+  if (type === "designation") return { in: true, out: true };
+  if (type === "collect") return { in: true, out: true };
+  if (type === "loopStart" || type === "loopEnd") return { in: true, out: true };
+  if (kind === "prompt" || type === "prompt") return { in: false, out: true };
+  if (kind === "output" || type === "output" || type === "io") return { in: true, out: false };
+  return { in: false, out: false };
+}
+
+function canvasPortButtonHtml(blockId, port) {
+  const lab = port === "in" ? "Input port" : "Output port";
+  return `<button type="button" class="canvas-port canvas-port--${port}" data-block-id="${escHtml(blockId)}" data-port="${port}" aria-label="${lab}" title="${lab}" onclick="onCanvasPortClick(event)"></button>`;
+}
+
+function canvasGiveAllRowOutPortHtml(blockId, rowIdx) {
+  const lab = `Give All model ${Number(rowIdx) + 1} output`;
+  const port = `out:${Number(rowIdx)}`;
+  // Use the same click-to-connect behavior as other ports.
+  return `<button type="button" class="canvas-port canvas-port--out canvas-port--row-out" data-block-id="${escHtml(blockId)}" data-port="${escHtml(port)}" aria-label="${lab}" title="${lab}" onclick="onCanvasPortClick(event)"></button>`;
+}
+
+function wrapCanvasTabNode(b, tabInnerHtml) {
+  const layout = getBlockPortLayout(b);
+  const w = String(b?.type) === "collect" ? COLLECT_TAB_W : CANVAS_TAB_W;
+  const h = String(b?.type) === "collect" ? COLLECT_TAB_H : CANVAS_TAB_H;
+  const inP = layout.in ? canvasPortButtonHtml(b.id, "in") : "";
+  const outP = layout.out ? canvasPortButtonHtml(b.id, "out") : "";
+  return `
+    <div class="canvas-node canvas-node--tab" data-block-id="${escHtml(b.id)}" style="left:${b.x}px;top:${b.y}px;width:${w}px;height:${h}px">
+      ${inP}
+      <div class="canvas-node-body">${tabInnerHtml}</div>
+      ${outP}
+    </div>
+  `;
+}
+
+function clearCanvasLinking() {
+  canvasLinkPending = null;
+  document.getElementById("canvas-stage")?.classList.remove("is-linking");
+}
+
+function canBlockSend(blockId) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  return Boolean(b && getBlockPortLayout(b).out);
+}
+function canBlockReceive(blockId) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  return Boolean(b && getBlockPortLayout(b).in);
+}
+
+/** Directed edge (out → in) from two port clicks, in click order. */
+function directedEdgeFromTwoPortClicks(blockA, portA, blockB, portB) {
+  if (blockA === blockB) return null;
+  const kind = (p) => (p === "in") ? "in" : (String(p).startsWith("out") ? "out" : "");
+  const ka = kind(portA);
+  const kb = kind(portB);
+  if (!ka || !kb) return null;
+  const candidates = [];
+  if (ka === "out" && kb === "in") candidates.push([blockA, blockB]);
+  if (ka === "in" && kb === "out") candidates.push([blockB, blockA]);
+  if (ka === "out" && kb === "out") {
+    candidates.push([blockA, blockB]);
+    candidates.push([blockB, blockA]);
+  }
+  if (ka === "in" && kb === "in") {
+    candidates.push([blockB, blockA]);
+    candidates.push([blockA, blockB]);
+  }
+  for (const [fromId, toId] of candidates) {
+    if (canBlockSend(fromId) && canBlockReceive(toId)) return { fromBlockId: fromId, toBlockId: toId };
+  }
+  return null;
+}
+
+function onCanvasPortClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (appView !== "canvas") return;
+  const btn = e.currentTarget;
+  const blockId = String(btn.getAttribute("data-block-id") || "");
+  const port = String(btn.getAttribute("data-port") || "");
+  const isIn = port === "in";
+  const isOut = port === "out" || port.startsWith("out:");
+  if (!blockId || (!isIn && !isOut)) return;
+
+  const stage = document.getElementById("canvas-stage");
+  if (!stage) return;
+
+  if (!canvasLinkPending) {
+    canvasLinkPending = { blockId, port };
+    stage.classList.add("is-linking");
+    return;
+  }
+
+  const p = canvasLinkPending;
+  if (p.blockId === blockId && p.port === port) {
+    clearCanvasLinking();
+    return;
+  }
+
+  const edge = directedEdgeFromTwoPortClicks(p.blockId, p.port, blockId, port);
+  clearCanvasLinking();
+  if (!edge) return;
+
+  const newEdge = {
+    id: uid(),
+    fromBlockId: edge.fromBlockId,
+    fromPort: String(p.port).startsWith("out") ? String(p.port) : (String(port).startsWith("out") ? String(port) : "out"),
+    toBlockId: edge.toBlockId,
+    toPort: (port === "in" || p.port === "in") ? "in" : "in",
+  };
+
+  // Allow multiple incoming connections. Only de-dupe exact duplicates.
+  canvasEdges = canvasEdges.filter(e =>
+    !(
+      e.fromBlockId === newEdge.fromBlockId &&
+      String(e.fromPort || "out") === String(newEdge.fromPort || "out") &&
+      e.toBlockId === newEdge.toBlockId &&
+      String(e.toPort || "in") === String(newEdge.toPort || "in")
+    )
+  );
+  canvasEdges.push(newEdge);
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function scheduleUpdateCanvasEdgesSvg() {
+  if (canvasEdgesRaf) return;
+  canvasEdgesRaf = requestAnimationFrame(() => {
+    canvasEdgesRaf = 0;
+    updateCanvasEdgesSvg();
+  });
+}
+
+function getCanvasPortWorldCenter(blockId, port) {
+  const id = cssAttrEscape(blockId);
+  const p = cssAttrEscape(port);
+  const sel = `.canvas-port[data-block-id="${id}"][data-port="${p}"]`;
+  const el = document.querySelector(sel);
+  const stage = document.getElementById("canvas-stage");
+  if (!el || !stage) return null;
+  const er = el.getBoundingClientRect();
+  const sr = stage.getBoundingClientRect();
+  const cx = er.left + er.width / 2 - sr.left;
+  const cy = er.top + er.height / 2 - sr.top;
+  const z = canvasZoom || 1;
+  const wx = (cx - canvasPanX) / z;
+  const wy = (cy - canvasPanY) / z;
+  return { x: wx, y: wy };
+}
+
+function updateCanvasEdgesSvg() {
+  const svg = document.getElementById("canvas-edges-svg");
+  if (!svg || appView !== "canvas") return;
+  const edges = canvasEdges || [];
+  const lines = edges.map((edge) => {
+    const a = getCanvasPortWorldCenter(edge.fromBlockId, edge.fromPort || "out");
+    const b = getCanvasPortWorldCenter(edge.toBlockId, edge.toPort || "in");
+    if (!a || !b) return "";
+    const mx = (a.x + b.x) / 2;
+    return `<path d="M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}" fill="none" />`;
+  }).join("");
+  svg.innerHTML = lines;
+}
+
+function blockExecKind(b) {
+  const t = String(b?.type ?? "");
+  if (t === "giveAll") return "giveAll";
+  if (t === "designation") return "designation";
+  if (t === "collect") return "collect";
+  if (t === "audit") return "audit";
+  if (t === "loopStart") return "loopStart";
+  if (t === "loopEnd") return "loopEnd";
+  const k = inferCanvasBlockKind(b);
+  if (k === "prompt" || t === "prompt") return "prompt";
+  if (k === "output" || t === "output" || t === "io") return "output";
+  return "other";
+}
+
+/**
+ * Prefer the next hop in a typical orchestra chain when multiple outgoing edges exist
+ * (e.g. orphan Prompt→Audit alongside Prompt→Give All).
+ * Order: giveAll → collect → audit → prompt → other → output (terminal last when branching).
+ */
+const FLOW_OUT_EDGE_PRIORITY = {
+  giveAll: 10,
+  designation: 15,
+  collect: 20,
+  audit: 30,
+  loopStart: 35,
+  loopEnd: 36,
+  prompt: 40,
+  other: 50,
+  output: 90,
+};
+
+function findOutgoingEdge(edges, fromBlockId, byId) {
+  const outs = edges.filter(
+    e => e.fromBlockId === fromBlockId && String(e.fromPort || "out").startsWith("out")
+  );
+  if (!outs.length) return null;
+  if (outs.length === 1 || !byId) return outs[0];
+  const rank = (toId) => {
+    const k = blockExecKind(byId[toId] || null);
+    return FLOW_OUT_EDGE_PRIORITY[k] !== undefined ? FLOW_OUT_EDGE_PRIORITY[k] : 60;
+  };
+  return outs.slice().sort((a, b) => {
+    const d = rank(a.toBlockId) - rank(b.toBlockId);
+    if (d !== 0) return d;
+    return String(a.id).localeCompare(String(b.id));
+  })[0];
+}
+
+function findOutgoingEdgesFromOutPort(edges, fromBlockId) {
+  return (edges || []).filter(e =>
+    e.fromBlockId === fromBlockId && String(e.fromPort || "out") === "out"
+  );
+}
+
+function carryAsUserString(carry) {
+  if (carry == null) return "";
+  if (typeof carry === "string") return carry;
+  if (carry.kind === "text") return String(carry.text ?? "");
+  if (carry.kind === "multi") {
+    return (carry.items || []).map(it => String(it?.text ?? "")).filter(Boolean).join("\n\n");
+  }
+  return String(carry);
+}
+
+function formatFlowTerminalOutput(carry) {
+  if (typeof carry === "string") return carry;
+  if (carry && carry.kind === "text") return String(carry.text ?? "");
+  if (carry && carry.kind === "multi") {
+    return (carry.items || []).map(it => String(it?.text ?? "")).filter(Boolean).join("\n\n");
+  }
+  return String(carry ?? "");
+}
+
+function parseDesignationTasks(rawText, maxTasks = 10) {
+  const maxN = Math.max(1, Math.min(10, Number(maxTasks) || 10));
+  const raw = String(rawText ?? "").trim();
+  if (!raw) return Array.from({ length: maxN }, () => "");
+
+  // Try JSON first (recommended): {"tasks":[...]} or {"task0":"...", ...}
+  const tryJson = () => {
+    const firstBrace = raw.indexOf("{");
+    const lastBrace = raw.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      const slice = raw.slice(firstBrace, lastBrace + 1);
+      try {
+        const j = JSON.parse(slice);
+        if (Array.isArray(j?.tasks)) {
+          const arr = j.tasks.map(x => String(x ?? ""));
+          return Array.from({ length: maxN }, (_, i) => String(arr[i] ?? ""));
+        }
+        const out = Array.from({ length: maxN }, () => "");
+        for (let i = 0; i < maxN; i++) {
+          const k1 = `task${i}`;
+          const k2 = `task ${i}`;
+          if (j && (k1 in j)) out[i] = String(j[k1] ?? "");
+          else if (j && (k2 in j)) out[i] = String(j[k2] ?? "");
+        }
+        if (out.some(Boolean)) return out;
+      } catch {}
+    }
+    return null;
+  };
+
+  const j = tryJson();
+  if (j) return j;
+
+  // Fallback: parse lines like "0: ..." / "Task 0 - ..." / "1) ..." etc.
+  const out = Array.from({ length: maxN }, () => "");
+  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  for (const ln of lines) {
+    const m = ln.match(/^(?:task\s*)?(\d)\s*[:)\-\.]\s*(.+)$/i);
+    if (m) {
+      const idx = Number(m[1]);
+      const text = String(m[2] ?? "").trim();
+      if (idx >= 0 && idx < maxN && text) out[idx] = text;
+    }
+  }
+  if (out.some(Boolean)) return out;
+
+  // Last resort: treat as one big task 0.
+  out[0] = raw;
+  return out;
+}
+
+async function execDesignationBlock(b, carry, originalUserPrompt, reportAction) {
+  const bb = normalizeDesignationBlock(b);
+  const user = carryAsUserString(carry) + formatFilesForPrompt(carryFiles(carry), "Files available to you");
+  const maxN = Math.max(1, Math.min(10, Array.isArray(bb.tasks) ? bb.tasks.length : 10));
+  const sysUser = String(bb.systemPrompt || "").trim() || "Split the incoming text into task prompts.";
+  const guard = [
+    sysUser,
+    "",
+    `Constraints: return between 1 and ${maxN} tasks (you do NOT have to use all ${maxN}).`,
+    "Return ONLY JSON like: {\"tasks\":[\"task0\",\"task1\", ...]}",
+    "If you need to return a file, output it exactly as:\n```file name.ext\n...contents...\n```",
+  ].join("\n");
+
+  const key = `designation:${bb.id}`;
+  reportAction?.({ key, name: "Designation", compact: true, done: 0, total: 1, models: [{ name: String(bb.model || "model"), state: "pending" }] });
+
+  const txt = await callChatModel(bb.providerId, bb.keyIdx, bb.model, guard, user, originalUserPrompt);
+  const newFiles = extractFilesFromAssistantText(txt);
+  const tasks = parseDesignationTasks(txt, maxN);
+
+  // Persist tasks into the block so they're visible.
+  const runtime = canvasBlocks.find(x => x.id === bb.id);
+  if (runtime && runtime.type === "designation") {
+    runtime.tasks = tasks;
+    persistCurrentCanvasStateForSelectedModel();
+    renderCanvasBlocks();
+  }
+
+  reportAction?.({ key, name: "Designation", compact: true, done: 1, total: 1, models: [{ name: String(bb.model || "model"), state: "done" }] });
+  const items = tasks
+    .map((t, i) => ({ taskIdx: i, label: `task_${i}`, text: String(t ?? "") }))
+    .filter(it => it.text.trim().length > 0);
+  return { kind: "tasks", items, files: mergeFiles(carryFiles(carry), newFiles) };
+}
+
+async function execGiveAllBlock(b, carry, originalUserPrompt, reportAction) {
+  const bb = normalizeGiveAllBlock(b);
+  const tasks = (bb.models || [])
+    .map((m, rowIdx) => ({ m, rowIdx, model: String(m?.model ?? "").trim() }))
+    .filter(t => t.model.length > 0);
+  const total = tasks.length;
+  if (!total) {
+    reportAction?.({ key: `giveAll:${bb.id}`, name: "Give All", done: 0, total: 0, models: [] });
+    return { kind: "multi", items: [] };
+  }
+  let completed = 0;
+  const results = new Array(total);
+  const modelStates = tasks.map(t => ({ name: String(t.m?.model ?? "").trim() || "model", state: "pending" }));
+  const key = `giveAll:${bb.id}`;
+  const update = () => reportAction?.({ key, name: "Give All", done: completed, total, models: modelStates });
+  update();
+
+  await Promise.all(tasks.map(async (t, idx) => {
+    const { m, rowIdx } = t;
+    const label = String(m.model || `model_${idx + 1}`).trim() || `model_${idx + 1}`;
+    const sys = String(bb?.systemPrompt ?? "");
+    // Some providers reject empty user content; send a harmless whitespace.
+    // The actual user prompt is only included if `{{prompt}}` appears in `sys`.
+    const userText = " " + formatFilesForPrompt(carryFiles(carry), "Files available to you");
+    try {
+      const txt = await callChatModel(m.providerId, m.keyIdx, m.model, sys, userText, originalUserPrompt);
+      const newFiles = extractFilesFromAssistantText(txt);
+      results[idx] = { label, text: txt, rowIdx, files: newFiles };
+      modelStates[idx].state = "done";
+    } catch (err) {
+      results[idx] = { label, text: `Error: ${err && err.message ? err.message : String(err)}`, rowIdx };
+      modelStates[idx].state = "error";
+    } finally {
+      completed++;
+      update();
+    }
+  }));
+
+  const merged = mergeFiles(
+    carryFiles(carry),
+    results.flatMap(r => Array.isArray(r?.files) ? r.files : [])
+  );
+  return { kind: "multi", items: results, files: merged };
+}
+
+function execCollectBlock(b, carry, ctx) {
+  const { edges, cur, byId } = ctx;
+  const outEdge = findOutgoingEdgesFromOutPort(edges, cur)[0] || findOutgoingEdge(edges, cur, byId);
+  const next = outEdge ? byId[outEdge.toBlockId] : null;
+  const nextKind = next ? blockExecKind(next) : "";
+
+  if (carry && typeof carry === "object" && carry.kind === "multi") {
+    if (nextKind === "output") return carry;
+    // Collect merges only the items that were actually routed into this Collect via wiring.
+    // (When you connect 3/5 Give All row outputs, only those 3 items arrive here.)
+    const items = (carry.items || []).slice().sort((a, b) => {
+      const ra = Number.isFinite(Number(a?.rowIdx)) ? Number(a.rowIdx) : 1e9;
+      const rb = Number.isFinite(Number(b?.rowIdx)) ? Number(b.rowIdx) : 1e9;
+      if (ra !== rb) return ra - rb;
+      return String(a?.label ?? "").localeCompare(String(b?.label ?? ""));
+    });
+    const parts = items.map((it, i) => {
+      const lab = String(it?.label ?? `model_${i + 1}`).trim() || `model_${i + 1}`;
+      const body = String(it?.text ?? "").trim();
+      return `### ${lab}\n\n${body}`;
+    });
+    const n = items.length;
+    const header =
+      `Below are exactly ${n} upstream output section(s). Each section starts with a "### <label>" heading and contains verbatim text from earlier blocks. ` +
+      `Do not assume a different count. Do not invent missing sections.\n\n`;
+    const merged = mergeFiles(
+      carryFiles(carry),
+      (carry.items || []).flatMap(it => Array.isArray(it?.files) ? it.files : [])
+    );
+    return { kind: "text", text: header + parts.join("\n\n---\n\n"), files: merged };
+  }
+  return { kind: "text", text: carryAsUserString(carry), files: carryFiles(carry) };
+}
+
+async function execAuditBlock(b, carry, originalUserPrompt, reportAction) {
+  const bb = normalizeAuditBlock(b);
+  const filesBundle = formatFilesForPrompt(carryFiles(carry), "Files available to you");
+  const base = carryAsUserString(carry);
+  // Some providers reject empty user content; send a harmless whitespace.
+  const user = (base && base.trim().length ? base : " ") + (filesBundle || "");
+  const key = `model:${bb.id}`;
+  const mname = String(bb.model || "model");
+  reportAction?.({ key, name: "Model", compact: true, done: 0, total: 1, models: [{ name: mname, state: "pending" }] });
+  const out = await callChatModel(bb.providerId, bb.keyIdx, bb.model, bb.systemPrompt, user, originalUserPrompt);
+  reportAction?.({ key, name: "Model", compact: true, done: 1, total: 1, models: [{ name: mname, state: "done" }] });
+  const newFiles = extractFilesFromAssistantText(out);
+  return { kind: "text", text: out, files: mergeFiles(carryFiles(carry), newFiles) };
+}
+
+async function runOrchestraFlowForPipeline(modelId, originalUserPrompt, report, initialFiles) {
+  const mid = String(modelId ?? "").trim();
+  if (!mid) return { text: "Select a model in the pipeline dropdown to run its canvas flow.", files: [] };
+
+  if (appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+
+  const { blocks, edges } = snapshotFlowForModel(mid);
+  const byId = Object.fromEntries(blocks.map(b => [b.id, b]));
+  const promptBlock = blocks.find(b => blockExecKind(b) === "prompt");
+  if (!promptBlock) {
+    return { text: "This model's canvas has no Prompt panel. Add a Prompt block and connect it to your flow.", files: [] };
+  }
+
+  let cur = promptBlock.id;
+  let carry = { kind: "text", text: String(originalUserPrompt), files: Array.isArray(initialFiles) ? initialFiles : [] };
+  const rep = typeof report === "function" ? report : () => {};
+  /** @type {{ open: boolean, iterations: any[] }} */
+  const status = { open: true, iterations: [] };
+  const ensureIter = (idx) => {
+    while (status.iterations.length <= idx) status.iterations.push({ loopLine: "", actions: [] });
+    return status.iterations[idx];
+  };
+  const emit = () => rep(status);
+
+  const setLoopLineFromStack = () => {
+    const top = loopStack[loopStack.length - 1];
+    if (!top) return;
+    const max = Number(top.max) || 1;
+    const iter = Number(top.iter) || 0;
+    const curIter = Math.min(iter + 1, max);
+    const iterIdx = Math.max(0, curIter - 1);
+    const it = ensureIter(iterIdx);
+    it.loopLine = `Loop ${curIter}/${max}`;
+  };
+  /** @type {{ startId: string, iter: number, max: number }[]} */
+  const loopStack = [];
+  ensureIter(0).loopLine = "";
+  emit();
+
+  const currentIterIdx = () => {
+    const top = loopStack[loopStack.length - 1];
+    if (!top) return 0;
+    const max = Number(top.max) || 1;
+    const iter = Number(top.iter) || 0;
+    return Math.max(0, Math.min(iter, max - 1));
+  };
+
+  const setAction = (actionObj) => {
+    const it = ensureIter(currentIterIdx());
+    const key = String(actionObj?.key ?? actionObj?.name ?? "Action");
+    const name = String(actionObj?.name ?? "Action");
+    const isParallel = Boolean(actionObj?.parallel);
+    let a = it.actions.find(x => x.key === key) || null;
+    if (!a) {
+      // In sequential mode, collapse previous action when moving on.
+      if (!isParallel) {
+        const prev = it.actions[it.actions.length - 1];
+        if (prev) prev.open = false;
+      }
+      a = { key, name, done: 0, total: 0, models: [], open: true, compact: false };
+      it.actions.push(a);
+    }
+    a.done = Number(actionObj?.done ?? a.done);
+    a.total = Number(actionObj?.total ?? a.total);
+    a.models = Array.isArray(actionObj?.models) ? actionObj.models : a.models;
+    a.compact = Boolean(actionObj?.compact);
+    emit();
+
+    // Auto-collapse when complete
+    if (a.total > 0 && a.done >= a.total) {
+      a.open = false;
+      emit();
+    }
+  };
+
+  function inferLoopMaxForStart(startId) {
+    // Walk forward from Loop Start following the preferred outgoing edge until we hit a Loop End,
+    // then read its configured count.
+    let curId = startId;
+    for (let i = 0; i < 48; i++) {
+      const edge = findOutgoingEdge(edges, curId, byId);
+      if (!edge) return 1;
+      curId = edge.toBlockId;
+      const b = byId[curId];
+      if (b && blockExecKind(b) === "loopEnd") {
+        return normalizeLoopEndBlock(b).loops;
+      }
+    }
+    return 1;
+  }
+
+  async function runLinearUntilStop(startId, startCarry, reportFn) {
+    const repAct = typeof reportFn === "function" ? reportFn : setAction;
+    let cid = startId;
+    let ccarry = startCarry;
+    for (let step = 0; step < 48; step++) {
+      const b = byId[cid];
+      if (!b) return { stopAt: null, carry: ccarry };
+      const ek = blockExecKind(b);
+      if (ek === "output") return { stopAt: "output", carry: ccarry };
+      if (ek === "collect") return { stopAt: cid, carry: ccarry };
+      if (ek === "prompt") {
+        ccarry = { kind: "text", text: String(originalUserPrompt), files: carryFiles(ccarry) };
+      } else if (ek === "designation") {
+        ccarry = await execDesignationBlock(b, ccarry, originalUserPrompt, repAct);
+      } else if (ek === "giveAll") {
+        ccarry = await execGiveAllBlock(b, ccarry, originalUserPrompt, repAct);
+      } else if (ek === "audit") {
+        ccarry = await execAuditBlock(b, ccarry, originalUserPrompt, repAct);
+      } else if (ek === "other") {
+        // pass through
+      }
+      const outs = findOutgoingEdgesFromOutPort(edges, cid);
+      const edge = outs.length ? outs[0] : findOutgoingEdge(edges, cid, byId);
+      if (!edge) return { stopAt: null, carry: ccarry };
+      cid = edge.toBlockId;
+    }
+    return { stopAt: null, carry: ccarry };
+  }
+
+  for (let step = 0; step < 48; step++) {
+    const b = byId[cur];
+    if (!b) return { text: "Flow error: missing block in chain.", files: carryFiles(carry) };
+
+    const ek = blockExecKind(b);
+    if (ek === "output") return { text: formatFlowTerminalOutput(carry), files: carryFiles(carry) };
+
+    if (ek === "prompt") {
+      carry = { kind: "text", text: String(originalUserPrompt), files: carryFiles(carry) };
+    } else if (ek === "loopStart") {
+      // Push a frame the first time we enter this loop start.
+      const top = loopStack[loopStack.length - 1];
+      if (!top || top.startId !== cur) {
+        loopStack.push({ startId: cur, iter: 0, max: inferLoopMaxForStart(cur) });
+        setLoopLineFromStack();
+        emit();
+      }
+    } else if (ek === "giveAll") {
+      carry = await execGiveAllBlock(b, carry, originalUserPrompt, setAction);
+
+      // If per-row outputs are wired (out:0 / out:1 / ...), route each model output separately.
+      const rowEdges = edges.filter(e =>
+        e.fromBlockId === cur && String(e.fromPort || "").startsWith("out:")
+      );
+      if (rowEdges.length && carry && typeof carry === "object" && carry.kind === "multi") {
+        const items = carry.items || [];
+        const connected = items.filter(it => rowEdges.some(e => String(e.fromPort) === `out:${Number(it?.rowIdx)}`));
+        const routed = [];
+        const results = await Promise.allSettled(connected.map(async (it) => {
+          const rowIdx = Number(it?.rowIdx);
+          const edge = rowEdges.find(e => String(e.fromPort) === `out:${rowIdx}`);
+          if (!edge) return null;
+          const branchKey = `branch:giveAll:${cur}:out:${rowIdx}`;
+          const repBranch = (obj) => setAction({
+            ...obj,
+            parallel: true,
+            key: `${branchKey}|${obj?.key || obj?.name}`,
+            name: `${String(it?.label || `model_${rowIdx}`)} · ${String(obj?.name || "Action")}`,
+          });
+          const res = await runLinearUntilStop(edge.toBlockId, { kind: "text", text: String(it?.text ?? ""), files: mergeFiles(carryFiles(carry), Array.isArray(it?.files) ? it.files : []) }, repBranch);
+          return { it, res };
+        }));
+
+        let commonCollect = null;
+        let allHitCollect = true;
+        results.forEach((r) => {
+          if (r.status !== "fulfilled" || !r.value) { allHitCollect = false; return; }
+          const { it, res } = r.value;
+          routed.push({ label: it?.label, text: carryAsUserString(res.carry), rowIdx: Number(it?.rowIdx) });
+          if (!res.stopAt || res.stopAt === "output") {
+            allHitCollect = false;
+          } else {
+            commonCollect = commonCollect == null ? res.stopAt : commonCollect;
+            if (commonCollect !== res.stopAt) allHitCollect = false;
+          }
+        });
+
+        if (routed.length && allHitCollect && commonCollect) {
+          // Jump to the collect node and let it merge the routed outputs.
+          cur = commonCollect;
+          carry = { kind: "multi", items: routed, files: carryFiles(carry) };
+          continue;
+        }
+      }
+    } else if (ek === "designation") {
+      carry = await execDesignationBlock(b, carry, originalUserPrompt, setAction);
+      const taskEdges = edges.filter(e => e.fromBlockId === cur && String(e.fromPort || "").startsWith("out:"));
+      if (taskEdges.length && carry && typeof carry === "object" && carry.kind === "tasks") {
+        const items = carry.items || [];
+        const connected = items.filter(it => taskEdges.some(e => String(e.fromPort) === `out:${Number(it?.taskIdx)}`));
+        const routed = [];
+        const results = await Promise.allSettled(connected.map(async (it) => {
+          const idx = Number(it?.taskIdx);
+          const edge = taskEdges.find(e => String(e.fromPort) === `out:${idx}`);
+          if (!edge) return null;
+          const branchKey = `branch:designation:${cur}:out:${idx}`;
+          const repBranch = (obj) => setAction({
+            ...obj,
+            parallel: true,
+            key: `${branchKey}|${obj?.key || obj?.name}`,
+            name: `task_${idx} · ${String(obj?.name || "Action")}`,
+          });
+          const res = await runLinearUntilStop(edge.toBlockId, { kind: "text", text: String(it?.text ?? ""), files: carryFiles(carry) }, repBranch);
+          return { it, res };
+        }));
+
+        let commonCollect = null;
+        let allHitCollect = true;
+        results.forEach((r) => {
+          if (r.status !== "fulfilled" || !r.value) { allHitCollect = false; return; }
+          const { it, res } = r.value;
+          const idx = Number(it?.taskIdx);
+          routed.push({ label: `task_${idx}`, text: carryAsUserString(res.carry), rowIdx: idx });
+          if (!res.stopAt || res.stopAt === "output") {
+            allHitCollect = false;
+          } else {
+            commonCollect = commonCollect == null ? res.stopAt : commonCollect;
+            if (commonCollect !== res.stopAt) allHitCollect = false;
+          }
+        });
+
+        if (routed.length && allHitCollect && commonCollect) {
+          cur = commonCollect;
+          carry = { kind: "multi", items: routed, files: carryFiles(carry) };
+          continue;
+        }
+      }
+    } else if (ek === "collect") {
+      setAction({ key: `collect:${b.id}`, name: "Collect", done: 1, total: 1, models: [] });
+      carry = execCollectBlock(b, carry, { edges, cur, byId });
+    } else if (ek === "loopEnd") {
+      const top = loopStack[loopStack.length - 1];
+      if (!top) return "Loop error: reached Loop End without a matching Loop Start.";
+      const bb = normalizeLoopEndBlock(b);
+      // Set max from the loop end block each time (allows editing).
+      top.max = bb.loops;
+      top.iter += 1;
+      setLoopLineFromStack();
+      emit();
+      if (top.iter < top.max) {
+        // Jump back to the matching Loop Start.
+        cur = top.startId;
+        continue;
+      }
+      // Done looping: pop and continue out of Loop End as usual.
+      loopStack.pop();
+      setLoopLineFromStack();
+      emit();
+    } else if (ek === "audit") {
+      carry = await execAuditBlock(b, carry, originalUserPrompt, setAction);
+    } else if (ek === "other") {
+      // Unknown tab: pass through unchanged
+    }
+
+    const outs = findOutgoingEdgesFromOutPort(edges, cur);
+    if (!outs.length) {
+      const edge = findOutgoingEdge(edges, cur, byId);
+      if (!edge) return { text: "Flow stopped before an Output panel. Connect the last processing block to Output.", files: carryFiles(carry) };
+      cur = edge.toBlockId;
+      continue;
+    }
+
+    if (outs.length === 1) {
+      cur = outs[0].toBlockId;
+      continue;
+    }
+
+    // Control blocks are not meant to "fan out" into parallel execution.
+    // If they have multiple out edges, pick the preferred one (matches expected orchestra behavior).
+    if (ek === "prompt" || ek === "loopStart" || ek === "loopEnd") {
+      const edge = findOutgoingEdge(edges, cur, byId) || outs[0];
+      if (!edge) return { text: "Flow stopped before an Output panel. Connect the last processing block to Output.", files: carryFiles(carry) };
+      cur = edge.toBlockId;
+      continue;
+    }
+
+    rep(`Running ${outs.length} branch(es)…`);
+    const branchResults = await Promise.all(outs.map(async (e) => {
+      const target = byId[e.toBlockId];
+      const label = target ? (String(target.label ?? "").trim() || String(target.type ?? "").trim()) : "";
+      const res = await runLinearUntilStop(e.toBlockId, carry);
+      return { label: label || "branch", res };
+    }));
+
+    const collectId = branchResults.length ? branchResults[0].res.stopAt : null;
+    const allHitSameCollect =
+      collectId && collectId !== "output" && branchResults.every(x => x.res.stopAt === collectId);
+
+    if (allHitSameCollect) {
+      cur = collectId;
+      carry = {
+        kind: "multi",
+        items: branchResults.map(x => ({
+          label: x.label,
+          text: carryAsUserString(x.res.carry),
+        })),
+        files: branchResults.flatMap(x => carryFiles(x.res.carry)),
+      };
+      continue;
+    }
+
+    // Branches did not reconverge cleanly; return everything as multi to Output formatting.
+    return { text: formatFlowTerminalOutput({
+      kind: "multi",
+      items: branchResults.map(x => ({
+        label: x.label,
+        text: carryAsUserString(x.res.carry),
+      })),
+      files: branchResults.flatMap(x => carryFiles(x.res.carry)),
+    }), files: branchResults.flatMap(x => carryFiles(x.res.carry)) };
+  }
+
+  return { text: "Flow stopped: too many steps (possible cycle). Check your connections.", files: carryFiles(carry) };
+}
+
+let orchestraInFlight = false;
+let orchestraAbortCtl = null;
+let orchestraStopRequested = false;
+
+function setSendButtonState(inFlight) {
+  const btn = document.getElementById("send-btn");
+  if (!btn) return;
+  if (inFlight) {
+    btn.classList.add("is-stop");
+    btn.title = "Stop";
+    btn.setAttribute("aria-label", "Stop");
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1" ry="1"/></svg>`;
+  } else {
+    btn.classList.remove("is-stop");
+    btn.title = "Send";
+    btn.setAttribute("aria-label", "Send");
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.2L13.5 12H10.2v2.8H5.8V12H2.5L8 3.2z"/></svg>`;
+  }
+}
+
+function stopOrchestraNow() {
+  orchestraStopRequested = true;
+  try { orchestraAbortCtl?.abort(); } catch {}
+}
+
+function onSendBtnClick() {
+  if (orchestraInFlight) {
+    stopOrchestraNow();
+    return;
+  }
+  handleSend();
+}
+
+// ── Send: runs the selected model's canvas flow (orchestra) ──
+async function handleSend() {
+  const input = document.getElementById("msg-input");
+  const text = (input.value || "").trim();
+  const files = composerFiles.slice();
+  if (!text && !files.length) return;
+  if (orchestraInFlight) return;
+  orchestraInFlight = true;
+  orchestraStopRequested = false;
+  orchestraAbortCtl = new AbortController();
+  setSendButtonState(true);
+
+  try {
+    const promptText = text || "See attached files.";
+    if (!activeChatId) {
+      const id = uid();
+      chats.unshift({ id, title: promptText.slice(0, 48), preview: (selectedPipeline || "chat") + " · 1 message", ts: Date.now() });
+      activeChatId = id;
+      chatMessages[id] = [];
+      mainPane = "chat";
+    }
+
+    if (!chatMessages[activeChatId]) chatMessages[activeChatId] = [];
+    chatMessages[activeChatId].push({ role: "user", text: promptText, files });
+
+    input.value = "";
+    autoResize(input);
+    clearComposerFiles();
+    mainPane = "chat";
+    renderSidebar();
+    renderModels();
+    renderMessages();
+    saveChatsStateToStorage();
+
+    const chatId = activeChatId;
+    const thinkingIdx = chatMessages[chatId].push({
+      role: "assistant",
+      text: "",
+      orchestraStatusObj: { open: true, iterations: [{ loopLine: "", actions: [] }] },
+    }) - 1;
+    renderMessages();
+
+    const bumpOrchestra = (obj) => {
+      const row = chatMessages[chatId]?.[thinkingIdx];
+      if (!row || row.role !== "assistant") return;
+      row.orchestraStatusObj = obj;
+      renderMessages();
+    };
+
+    try {
+      const reply = await runOrchestraFlowForPipeline(selectedPipeline, promptText, bumpOrchestra, files);
+      const finalStatus = chatMessages[chatId]?.[thinkingIdx]?.orchestraStatusObj;
+      if (finalStatus) finalStatus.open = false;
+      const replyFiles = Array.isArray(reply?.files) ? reply.files : [];
+      chatMessages[chatId][thinkingIdx] = {
+        role: "assistant",
+        text: String(reply?.text ?? reply ?? ""),
+        files: replyFiles.filter(f => String(f?.source || "") !== "user"),
+        orchestraStatusObj: finalStatus
+      };
+    } catch (err) {
+      const finalStatus = chatMessages[chatId]?.[thinkingIdx]?.orchestraStatusObj;
+      if (finalStatus) finalStatus.open = false;
+      chatMessages[chatId][thinkingIdx] = {
+        role: "assistant",
+        text: `Error: ${err && err.message ? err.message : String(err)}`,
+        files: [],
+        orchestraStatusObj: finalStatus,
+      };
+    }
+
+    renderSidebar();
+    renderMessages();
+    saveChatsStateToStorage();
+  } finally {
+    orchestraInFlight = false;
+    orchestraAbortCtl = null;
+    setSendButtonState(false);
+  }
+}
+
+// ── New chat modal ──
+function openNewChatModal() {
+  closeRenameChatModal();
+  closeRenameModelModal();
+  const el = document.getElementById("new-chat-overlay");
+  el.classList.add("visible");
+  el.setAttribute("aria-hidden", "false");
+  setTimeout(() => document.getElementById("new-chat-title-input").focus(), 50);
+}
+function closeNewChatModal() {
+  const el = document.getElementById("new-chat-overlay");
+  el.classList.remove("visible");
+  el.setAttribute("aria-hidden", "true");
+  document.getElementById("new-chat-title-input").value = "";
+}
+function submitNewChat() {
+  const titleEl = document.getElementById("new-chat-title-input");
+  const title = titleEl.value.trim() || "New chat";
+  const id = uid();
+  chats.unshift({ id, title, preview: "No messages yet", ts: Date.now() });
+  activeChatId = id;
+  chatMessages[id] = [];
+  closeNewChatModal();
+  exitCanvasView({ skipRender: true });
+  renderSidebar();
+  renderModels();
+  renderMessages();
+  setTimeout(() => document.getElementById("msg-input").focus(), 80);
+  saveChatsStateToStorage();
+}
+
+// ── Rename chat modal ──
+function openRenameChatModal(id) {
+  const chat = chats.find(c => c.id === id);
+  if (!chat) return;
+  closeRenameModelModal();
+  renamingChatId = id;
+  const el = document.getElementById("rename-chat-overlay");
+  el.classList.add("visible");
+  el.setAttribute("aria-hidden", "false");
+  const input = document.getElementById("rename-chat-title-input");
+  input.value = chat.title;
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+function closeRenameChatModal() {
+  const el = document.getElementById("rename-chat-overlay");
+  el.classList.remove("visible");
+  el.setAttribute("aria-hidden", "true");
+  renamingChatId = null;
+}
+function submitRenameChat() {
+  const title = document.getElementById("rename-chat-title-input").value.trim();
+  if (title && renamingChatId) {
+    const chat = chats.find(c => c.id === renamingChatId);
+    if (chat) chat.title = title;
+  }
+  closeRenameChatModal();
+  renderSidebar();
+  renderModels();
+  saveChatsStateToStorage();
+}
+
+function deleteModel(e, id) {
+  e.stopPropagation();
+  cancelPendingModelRowActivation();
+
+  if (appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+
+  const wasSelected = selectedPipeline === id;
+  PIPELINES = PIPELINES.filter(p => p.id !== id);
+  delete canvasByModel[id];
+  saveCanvasMapToStorage();
+
+  if (wasSelected) {
+    selectedPipeline = PIPELINES[0]?.id ?? null;
+  }
+
+  if (!PIPELINES.length) {
+    selectedPipeline = null;
+    mainPane = "chat";
+    if (appView === "canvas") {
+      exitCanvasView({ skipRender: true });
+    }
+  } else if (wasSelected) {
+    loadCanvasRuntimeForSelectedModel();
+    if (appView === "canvas") {
+      renderMessages();
+    }
+  }
+
+  saveModelsToStorage();
+  syncPipelineLabel();
+  renderSidebar();
+  renderModels();
+  if (appView !== "canvas") renderMessages();
+}
+
+// ── Rename model modal ──
+function openRenameModelModal(id) {
+  const m = PIPELINES.find(p => p.id === id);
+  if (!m) return;
+  closeRenameChatModal();
+  renamingModelId = id;
+  const el = document.getElementById("rename-model-overlay");
+  el.classList.add("visible");
+  el.setAttribute("aria-hidden", "false");
+  const input = document.getElementById("rename-model-title-input");
+  input.value = m.name;
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+
+function closeRenameModelModal() {
+  const el = document.getElementById("rename-model-overlay");
+  el.classList.remove("visible");
+  el.setAttribute("aria-hidden", "true");
+  renamingModelId = null;
+  document.getElementById("rename-model-title-input").value = "";
+}
+
+function submitRenameModel() {
+  const title = document.getElementById("rename-model-title-input").value.trim();
+  if (title && renamingModelId) {
+    const m = PIPELINES.find(p => p.id === renamingModelId);
+    if (m) m.name = title;
+  }
+  closeRenameModelModal();
+  saveModelsToStorage();
+  renderSidebar();
+  renderModels();
+  syncPipelineLabel();
+}
+
+// ── Settings modal ──
+function openSettingsModal() {
+  closeAllPopovers();
+  closeRenameChatModal();
+  closeRenameModelModal();
+  const el = document.getElementById("settings-overlay");
+  el.classList.add("visible");
+  el.setAttribute("aria-hidden", "false");
+  apiKeysDraft = loadApiKeys();
+  loadMemoryVault();
+  selectSettingsTab(settingsTab);
+}
+function closeSettingsModal() {
+  const el = document.getElementById("settings-overlay");
+  el.classList.remove("visible");
+  el.setAttribute("aria-hidden", "true");
+}
+
+// ── API keys (saved locally) ──
+const API_KEYS_STORAGE_KEY = "swarm_ai_api_keys_v1";
+const API_PROVIDERS = [
+  { id: "openrouter", name: "OpenRouter", hint: "Configure your OpenRouter key for routed model access." },
+  { id: "anthropic", name: "Anthropic", hint: "Use an Anthropic API key for Claude models." },
+  { id: "google_ai_studio", name: "Google AI Studio", hint: "Use a Google AI Studio key for Gemini models." },
+  { id: "openai", name: "OpenAI", hint: "Use an OpenAI API key for GPT models." },
+];
+
+let apiKeysDraft = null;
+let apiKeysSaveTimer = null;
+
+// ── Memory (Obsidian vault) ──
+const MEMORY_VAULT_STORAGE_KEY = "swarm_ai_memory_vault_v1";
+let settingsTab = "api"; // "api" | "memory"
+/** @type {{ vaultName: string, files: Record<string, { path: string, content: string }> }} */
+let memoryVault = { vaultName: "", files: {} };
+let memoryPermanentBundle = "";
+
+function buildPermanentBundleFromVault() {
+  const files = memoryVault.files || {};
+  const keys = Object.keys(files);
+  const perm = keys
+    .filter(k => {
+      const p = String(files[k]?.path ?? "");
+      return /\/Permanent\//i.test(p.replaceAll("\\", "/"));
+    })
+    .sort((a, b) => a.localeCompare(b));
+
+  let out = "";
+  for (const k of perm) {
+    const f = files[k];
+    const content = String(f?.content ?? "").trim();
+    if (!content) continue;
+    const header = `## ${k}\n`;
+    const next = `${header}\n${content}\n\n`;
+    // Keep it bounded so prompts can't explode.
+    if (out.length + next.length > 50_000) {
+      out += `## (truncated)\nPermanent memory truncated to fit prompt size.\n`;
+      break;
+    }
+    out += next;
+  }
+  memoryPermanentBundle = out.trim();
+}
+
+function resolveMemoryFileKey(rawName) {
+  const name = String(rawName ?? "").trim();
+  if (!name) return null;
+  const base = name.replace(/\.md$/i, "");
+  const a = base in (memoryVault.files || {}) ? base : null;
+  const b = `${base}.md` in (memoryVault.files || {}) ? `${base}.md` : null;
+  return a || b;
+}
+
+function expandWikiLinksToContent(text) {
+  const src = String(text ?? "");
+  if (!src.includes("[[")) return src;
+  return src.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
+    const key = resolveMemoryFileKey(inner);
+    if (!key) return `[[${inner}]]`;
+    const f = memoryVault.files?.[key];
+    const content = String(f?.content ?? "").trim();
+    if (!content) return `[[${inner}]]`;
+    return `\n\n## ${key}\n\n${content}\n\n`;
+  });
+}
+
+function loadMemoryVault() {
+  const parsed = safeJsonParse(localStorage.getItem(MEMORY_VAULT_STORAGE_KEY), null);
+  if (!parsed || typeof parsed !== "object") return;
+  const vaultName = String(parsed.vaultName ?? "");
+  const filesRaw = parsed.files && typeof parsed.files === "object" ? parsed.files : {};
+  const files = {};
+  for (const [k, v] of Object.entries(filesRaw)) {
+    const key = String(k);
+    if (!key) continue;
+    files[key] = { path: String(v?.path ?? ""), content: String(v?.content ?? "") };
+  }
+  memoryVault = { vaultName, files };
+  buildPermanentBundleFromVault();
+}
+
+function saveMemoryVault() {
+  try {
+    localStorage.setItem(MEMORY_VAULT_STORAGE_KEY, JSON.stringify(memoryVault));
+  } catch {
+    // ignore
+  }
+}
+
+function clearMemoryVault() {
+  memoryVault = { vaultName: "", files: {} };
+  memoryPermanentBundle = "";
+  try { localStorage.removeItem(MEMORY_VAULT_STORAGE_KEY); } catch {}
+  renderMemoryTab();
+}
+
+function selectSettingsTab(tab) {
+  settingsTab = (tab === "memory") ? "memory" : "api";
+  document.getElementById("settings-pane-api").toggleAttribute("hidden", settingsTab !== "api");
+  document.getElementById("settings-pane-memory").toggleAttribute("hidden", settingsTab !== "memory");
+  const apiBtn = document.getElementById("settings-tab-api");
+  const memBtn = document.getElementById("settings-tab-memory");
+  apiBtn.classList.toggle("is-active", settingsTab === "api");
+  memBtn.classList.toggle("is-active", settingsTab === "memory");
+  apiBtn.setAttribute("aria-selected", settingsTab === "api" ? "true" : "false");
+  memBtn.setAttribute("aria-selected", settingsTab === "memory" ? "true" : "false");
+  if (settingsTab === "api") renderApiKeys();
+  if (settingsTab === "memory") renderMemoryTab();
+}
+
+function renderMemoryTab() {
+  const status = document.getElementById("memory-vault-status");
+  const list = document.getElementById("memory-file-list");
+  if (!status || !list) return;
+  const keys = Object.keys(memoryVault.files || {});
+  status.textContent = memoryVault.vaultName
+    ? `${memoryVault.vaultName} — ${keys.length} file(s)`
+    : "No vault selected.";
+
+  if (!keys.length) {
+    list.innerHTML = `<div class="memory-mini">Pick a vault folder to index its Markdown files.</div>`;
+    return;
+  }
+  const rows = keys.sort((a, b) => a.localeCompare(b)).slice(0, 500).map((k) => {
+    const f = memoryVault.files[k];
+    return `<div class="memory-file-item">
+      <div style="min-width:0;flex:1">
+        <div class="memory-file-name">${escHtml(k)}</div>
+        <div class="memory-file-path">${escHtml(f?.path || "")}</div>
+      </div>
+      <button type="button" class="memory-open-btn" onclick="openMemoryFileByKey(${JSON.stringify(k)})">Open</button>
+    </div>`;
+  }).join("");
+  list.innerHTML = rows;
+}
+
+function openMemoryFileByKey(key) {
+  const k = String(key ?? "");
+  const f = memoryVault.files?.[k];
+  if (!f) return;
+  openMemoryFileModal(k, f.path, f.content);
+}
+
+function openMemoryFileModal(name, path, content) {
+  const el = document.getElementById("memory-file-overlay");
+  el.classList.add("visible");
+  el.setAttribute("aria-hidden", "false");
+  document.getElementById("memory-file-heading").textContent = name || "Memory";
+  document.getElementById("memory-file-path").textContent = path || "";
+  document.getElementById("memory-file-content").innerHTML = renderMarkdownSafe(content);
+}
+
+function closeMemoryFileModal() {
+  const el = document.getElementById("memory-file-overlay");
+  el.classList.remove("visible");
+  el.setAttribute("aria-hidden", "true");
+  document.getElementById("memory-file-heading").textContent = "Memory";
+  document.getElementById("memory-file-path").textContent = "";
+  document.getElementById("memory-file-content").innerHTML = "";
+}
+
+function loadApiKeys() {
+  try {
+    const raw = localStorage.getItem(API_KEYS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const out = {};
+    for (const p of API_PROVIDERS) out[p.id] = Array.isArray(parsed?.[p.id]) ? parsed[p.id].map(x => String(x ?? "")) : [];
+    return out;
+  } catch {
+    const out = {};
+    for (const p of API_PROVIDERS) out[p.id] = [];
+    return out;
+  }
+}
+
+function readStoredKeysForProvider(providerId) {
+  const store = loadApiKeys();
+  const arr = Array.isArray(store?.[providerId]) ? store[providerId].map(x => String(x ?? "")) : [];
+  return arr.length ? arr : [""];
+}
+
+function giveAllKeySlotCount(providerId) {
+  const keys = readStoredKeysForProvider(providerId);
+  // UI shows at least one slot; cap to keep menus sane.
+  return Math.min(12, Math.max(1, keys.length));
+}
+
+function giveAllProviderOptionsHtml(selectedId) {
+  return API_PROVIDERS.map(p => `
+    <option value="${escHtml(p.id)}" ${p.id === selectedId ? "selected" : ""}>${escHtml(p.name)}</option>
+  `).join("");
+}
+
+function giveAllKeyOptionsHtml(providerId, selectedIdx) {
+  const n = giveAllKeySlotCount(providerId);
+  let out = "";
+  for (let i = 0; i < n; i++) {
+    out += `<option value="${i}" ${i === selectedIdx ? "selected" : ""}>Key ${i + 1}</option>`;
+  }
+  return out;
+}
+
+function normalizeGiveAllBlock(b) {
+  const w = typeof b?.w === "number" && Number.isFinite(b.w) ? b.w : 380;
+  const models = Array.isArray(b?.models) ? b.models : [];
+  const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+  const normalizedModels = (models.length ? models : [{ providerId: firstProvider, keyIdx: 0, model: "" }]).map(m => ({
+    providerId: API_PROVIDERS.some(p => p.id === m?.providerId) ? String(m.providerId) : firstProvider,
+    keyIdx: (() => {
+      const idx = Number(m?.keyIdx);
+      const max = giveAllKeySlotCount(String(m?.providerId || firstProvider)) - 1;
+      if (!Number.isFinite(idx)) return 0;
+      return Math.max(0, Math.min(max, idx));
+    })(),
+    model: String(m?.model ?? ""),
+  }));
+  // One system prompt per Give All panel (applies to every model).
+  // Migration: if older saved data had per-row prompts, use the first non-empty as the panel prompt.
+  const legacyRowPrompt = (models || []).map(m => String(m?.systemPrompt ?? "").trim()).find(Boolean) || "";
+  const systemPrompt = String(b?.systemPrompt ?? b?.note ?? "").trim() || legacyRowPrompt;
+
+  const { h: _dropLegacyH, note: _legacyNote, ...rest } = (b && typeof b === "object") ? b : {};
+  return { ...rest, type: "giveAll", label: "Give All", w, models: normalizedModels, systemPrompt };
+}
+
+function giveAllPatchModel(blockId, idx, field, value) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "giveAll") return;
+  if (!Array.isArray(b.models)) b.models = [];
+  if (!b.models[idx]) b.models[idx] = { providerId: API_PROVIDERS[0]?.id || "openrouter", keyIdx: 0, model: "" };
+
+  if (field === "providerId") {
+    const pid = String(value ?? "");
+    b.models[idx].providerId = API_PROVIDERS.some(p => p.id === pid) ? pid : (API_PROVIDERS[0]?.id || "openrouter");
+    const max = giveAllKeySlotCount(b.models[idx].providerId) - 1;
+    b.models[idx].keyIdx = Math.max(0, Math.min(max, Number(b.models[idx].keyIdx) || 0));
+  } else if (field === "keyIdx") {
+    const max = giveAllKeySlotCount(b.models[idx].providerId) - 1;
+    const n = Number(value);
+    b.models[idx].keyIdx = Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
+  } else if (field === "model") {
+    b.models[idx].model = String(value ?? "");
+  }
+
+  // Rebuilding the whole panel on every keystroke destroys input/textarea focus.
+  if (field === "model" || field === "keyIdx") {
+    schedulePersistCanvasStateForSelectedModel();
+    return;
+  }
+
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function giveAllAddModel(blockId) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "giveAll") return;
+  if (!Array.isArray(b.models)) b.models = [];
+  const pid = API_PROVIDERS[0]?.id || "openrouter";
+  b.models.push({ providerId: pid, keyIdx: 0, model: "" });
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function giveAllPatch(blockId, field, value) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "giveAll") return;
+  if (field === "systemPrompt") {
+    b.systemPrompt = String(value ?? "");
+  }
+  schedulePersistCanvasStateForSelectedModel();
+}
+
+function removeCanvasBlock(blockId) {
+  if (canvasLinkPending && canvasLinkPending.blockId === blockId) clearCanvasLinking();
+  canvasEdges = canvasEdges.filter(e => e.fromBlockId !== blockId && e.toBlockId !== blockId);
+  canvasBlocks = canvasBlocks.filter(x => x.id !== blockId);
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function cssAttrEscape(value) {
+  // Minimal escaping for use inside a double-quoted CSS attribute selector.
+  return String(value ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\"", "\\\"");
+}
+
+function queryCanvasBlockEl(blockId) {
+  const id = cssAttrEscape(blockId);
+  return document.querySelector(`.canvas-node[data-block-id="${id}"]`)
+    || document.querySelector(`.canvas-giveall[data-block-id="${id}"]`)
+    || document.querySelector(`.canvas-block-tab[data-block-id="${id}"]`);
+}
+
+function normalizeAuditBlock(b) {
+  const w = typeof b?.w === "number" && Number.isFinite(b.w) ? b.w : 380;
+  const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+  const providerId = API_PROVIDERS.some(p => p.id === String(b?.providerId)) ? String(b.providerId) : firstProvider;
+  const maxK = giveAllKeySlotCount(providerId) - 1;
+  const keyIdx = (() => {
+    const idx = Number(b?.keyIdx);
+    if (!Number.isFinite(idx)) return 0;
+    return Math.max(0, Math.min(maxK, idx));
+  })();
+  const model = String(b?.model ?? "");
+  const systemPrompt = String(b?.systemPrompt ?? b?.note ?? "");
+  const { h: _dropLegacyH, note: _legacyNote, models: _models, ...rest } = (b && typeof b === "object") ? b : {};
+  return {
+    ...rest,
+    type: "audit",
+    label: "Model",
+    w,
+    providerId,
+    keyIdx,
+    model,
+    systemPrompt,
+  };
+}
+
+function normalizeDesignationBlock(b) {
+  const w = typeof b?.w === "number" && Number.isFinite(b.w) ? b.w : 380;
+  const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+  const providerId = API_PROVIDERS.some(p => p.id === String(b?.providerId)) ? String(b.providerId) : firstProvider;
+  const maxK = giveAllKeySlotCount(providerId) - 1;
+  const keyIdx = (() => {
+    const idx = Number(b?.keyIdx);
+    if (!Number.isFinite(idx)) return 0;
+    return Math.max(0, Math.min(maxK, idx));
+  })();
+  const model = String(b?.model ?? "");
+  const systemPrompt = String(b?.systemPrompt ?? "");
+  const tasksRaw = Array.isArray(b?.tasks) ? b.tasks : [];
+  const desired = tasksRaw.length ? Math.max(1, Math.min(10, tasksRaw.length)) : 1;
+  const tasks = Array.from({ length: desired }, (_, i) => String(tasksRaw[i] ?? ""));
+  const { tasks: _dropTasks, ...rest } = (b && typeof b === "object") ? b : {};
+  return {
+    ...rest,
+    type: "designation",
+    label: "Designation",
+    w,
+    providerId,
+    keyIdx,
+    model,
+    systemPrompt,
+    tasks,
+  };
+}
+
+function designationPatch(blockId, field, value) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "designation") return;
+  if (field === "providerId") {
+    const pid = String(value ?? "");
+    b.providerId = API_PROVIDERS.some(p => p.id === pid) ? pid : (API_PROVIDERS[0]?.id || "openrouter");
+    const max = giveAllKeySlotCount(b.providerId) - 1;
+    b.keyIdx = Math.max(0, Math.min(max, Number(b.keyIdx) || 0));
+  } else if (field === "keyIdx") {
+    const max = giveAllKeySlotCount(b.providerId) - 1;
+    const n = Number(value);
+    b.keyIdx = Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
+  } else if (field === "model") {
+    b.model = String(value ?? "");
+  } else if (field === "systemPrompt") {
+    b.systemPrompt = String(value ?? "");
+  }
+  schedulePersistCanvasStateForSelectedModel();
+  // Avoid full re-render on keystrokes that should keep focus.
+  if (field === "model" || field === "systemPrompt" || field === "keyIdx") return;
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function designationTaskLabel(n) {
+  return `Task ${n}`;
+}
+
+function renderDesignationHtml(b) {
+  const bb = normalizeDesignationBlock(b);
+  const taskRows = bb.tasks.map((t, i) => `
+    <div class="canvas-giveall-row" data-row="${i}">
+      ${canvasGiveAllRowOutPortHtml(bb.id, i)}
+      <div class="canvas-mini-label span2">${escHtml(designationTaskLabel(i))}</div>
+      ${i === 0 ? "" : `
+        <button type="button" class="designation-task-del"
+          title="Remove task" aria-label="Remove task"
+          onmousedown="event.stopPropagation()" onclick="event.stopPropagation(); designationRemoveTask('${escHtml(bb.id)}', ${i})"
+        >✕</button>
+      `}
+      <div class="canvas-giveall-field span2">
+        <input type="text" value="${escHtml(t)}" placeholder="(filled by Designation)"
+          onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" readonly />
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="canvas-giveall canvas-designation" data-block-id="${escHtml(bb.id)}" style="left:${bb.x}px;top:${bb.y}px;width:${bb.w}px" role="dialog" aria-label="Designation">
+      ${canvasPortButtonHtml(bb.id, "in")}
+      <div class="canvas-giveall-inner">
+        <div class="canvas-giveall-header" data-canvas-panel-drag="1" data-block-id="${escHtml(bb.id)}">
+          <div class="canvas-giveall-title">Designation</div>
+        </div>
+        <div class="canvas-giveall-body">
+          <div class="canvas-giveall-scroll">
+            <div class="canvas-giveall-row" data-row="head">
+              <div class="canvas-mini-label">Provider</div>
+              <div class="canvas-giveall-field">
+                <select onmousedown="event.stopPropagation()" onclick="event.stopPropagation()"
+                  onchange="designationPatch('${escHtml(bb.id)}', 'providerId', this.value)"
+                >${giveAllProviderOptionsHtml(bb.providerId)}</select>
+              </div>
+
+              <div class="canvas-mini-label">Key</div>
+              <div class="canvas-giveall-field">
+                <select onmousedown="event.stopPropagation()" onclick="event.stopPropagation()"
+                  onchange="designationPatch('${escHtml(bb.id)}', 'keyIdx', Number(this.value))"
+                >${giveAllKeyOptionsHtml(bb.providerId, bb.keyIdx)}</select>
+              </div>
+
+              <div class="canvas-mini-label span2">Model name</div>
+              <div class="canvas-giveall-field span2">
+                <input type="text" value="${escHtml(bb.model)}" placeholder="e.g. gpt-4.1-mini / claude-3-5-sonnet-latest"
+                  onmousedown="event.stopPropagation()" onclick="event.stopPropagation()"
+                  oninput="designationPatch('${escHtml(bb.id)}', 'model', this.value)" />
+              </div>
+            </div>
+
+            <div class="canvas-audit-prompt-wrap">
+              <div class="canvas-mini-label">System prompt</div>
+              <textarea
+                class="canvas-giveall-textarea"
+                placeholder="Tell the model how to split the incoming text into up to 10 task prompts. Use {{prompt}} / [[memory]] here if needed."
+                onmousedown="event.stopPropagation()"
+                onclick="event.stopPropagation()"
+                oninput="designationPatch('${escHtml(bb.id)}', 'systemPrompt', this.value)"
+              >${escHtml(bb.systemPrompt)}</textarea>
+            </div>
+
+            <div style="height:6px"></div>
+            ${taskRows}
+          </div>
+          <div class="canvas-giveall-footer">
+            <button type="button" class="canvas-mini-btn" onclick="designationAddTask('${escHtml(bb.id)}')">+ Add task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function designationAddTask(blockId) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "designation") return;
+  if (!Array.isArray(b.tasks)) b.tasks = [""];
+  if (b.tasks.length >= 10) return;
+  b.tasks.push("");
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function designationRemoveTask(blockId, idx) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "designation") return;
+  if (!Array.isArray(b.tasks)) b.tasks = [""];
+  const i = Number(idx);
+  if (!Number.isFinite(i) || i < 0 || i >= b.tasks.length) return;
+  if (b.tasks.length <= 1) return; // keep at least 1
+
+  // Remove task slot.
+  b.tasks.splice(i, 1);
+
+  // Remove edges coming from removed or shifted out ports, and shift remaining port indices down.
+  canvasEdges = (canvasEdges || []).flatMap((e) => {
+    if (e.fromBlockId !== blockId) return [e];
+    const fp = String(e.fromPort || "out");
+    const m = fp.match(/^out:(\d+)$/);
+    if (!m) return [e];
+    const n = Number(m[1]);
+    if (n === i) return [];
+    if (n > i) return [{ ...e, fromPort: `out:${n - 1}` }];
+    return [e];
+  });
+
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function normalizeLoopEndBlock(b) {
+  const loopsRaw = Number(b?.loops ?? b?.count ?? 2);
+  const loops = Number.isFinite(loopsRaw) ? Math.max(1, Math.min(999, Math.floor(loopsRaw))) : 2;
+  const { loops: _dropLoops, count: _dropCount, ...rest } = (b && typeof b === "object") ? b : {};
+  return {
+    ...rest,
+    type: "loopEnd",
+    label: "Loop End",
+    loops,
+  };
+}
+
+function loopEndPatch(blockId, field, value) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || String(b.type) !== "loopEnd") return;
+  if (field === "loops") {
+    const n = Number(value);
+    b.loops = Number.isFinite(n) ? Math.max(1, Math.min(999, Math.floor(n))) : 2;
+  }
+  schedulePersistCanvasStateForSelectedModel();
+}
+
+function renderLoopEndHtml(b) {
+  const bb = normalizeLoopEndBlock(b);
+  return `
+    <div class="canvas-giveall canvas-loopend" data-block-id="${escHtml(bb.id)}" style="left:${bb.x}px;top:${bb.y}px;width:260px" role="dialog" aria-label="Loop End">
+      ${canvasPortButtonHtml(bb.id, "in")}
+      <div class="canvas-giveall-inner">
+        <div class="canvas-giveall-header" data-canvas-panel-drag="1" data-block-id="${escHtml(bb.id)}">
+          <div class="canvas-giveall-title">Loop End</div>
+        </div>
+        <div class="canvas-giveall-body">
+          <div class="canvas-giveall-scroll">
+            <div class="canvas-giveall-row" data-row="0">
+              <div class="canvas-mini-label">Number of loops</div>
+              <div class="canvas-giveall-field">
+                <input type="text" value="${escHtml(bb.loops)}" inputmode="numeric" pattern="\\d*"
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation()"
+                  oninput="loopEndPatch('${escHtml(bb.id)}','loops', this.value)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${canvasPortButtonHtml(bb.id, "out")}
+    </div>
+  `;
+}
+
+function auditPatch(blockId, field, value) {
+  const b = canvasBlocks.find(x => x.id === blockId);
+  if (!b || b.type !== "audit") return;
+
+  if (field === "providerId") {
+    const pid = String(value ?? "");
+    b.providerId = API_PROVIDERS.some(p => p.id === pid) ? pid : (API_PROVIDERS[0]?.id || "openrouter");
+    const max = giveAllKeySlotCount(b.providerId) - 1;
+    b.keyIdx = Math.max(0, Math.min(max, Number(b.keyIdx) || 0));
+  } else if (field === "keyIdx") {
+    const max = giveAllKeySlotCount(b.providerId) - 1;
+    const n = Number(value);
+    b.keyIdx = Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
+  } else if (field === "model") {
+    b.model = String(value ?? "");
+  } else if (field === "systemPrompt") {
+    b.systemPrompt = String(value ?? "");
+  }
+
+  // Rebuilding the whole panel on every keystroke destroys input/textarea focus.
+  if (field === "model" || field === "systemPrompt" || field === "keyIdx") {
+    schedulePersistCanvasStateForSelectedModel();
+    return;
+  }
+
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function renderAuditHtml(b) {
+  const bb = normalizeAuditBlock(b);
+  return `
+    <div class="canvas-giveall canvas-audit" data-block-id="${escHtml(bb.id)}" style="left:${bb.x}px;top:${bb.y}px;width:${bb.w}px" role="dialog" aria-label="Model">
+      ${canvasPortButtonHtml(bb.id, "in")}
+      <div class="canvas-giveall-inner">
+        <div class="canvas-giveall-header" data-canvas-panel-drag="1" data-block-id="${escHtml(bb.id)}">
+          <div class="canvas-giveall-title">Model</div>
+        </div>
+        <div class="canvas-giveall-body">
+          <div class="canvas-giveall-scroll">
+            <div class="canvas-giveall-row" data-row="0">
+              <div class="canvas-mini-label">Provider</div>
+              <div class="canvas-giveall-field">
+                <select
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation()"
+                  onchange="auditPatch('${escHtml(bb.id)}', 'providerId', this.value)"
+                >${giveAllProviderOptionsHtml(bb.providerId)}</select>
+              </div>
+
+              <div class="canvas-mini-label">Key</div>
+              <div class="canvas-giveall-field">
+                <select
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation()"
+                  onchange="auditPatch('${escHtml(bb.id)}', 'keyIdx', Number(this.value))"
+                >${giveAllKeyOptionsHtml(bb.providerId, bb.keyIdx)}</select>
+              </div>
+
+              <div class="canvas-mini-label span2">Model name</div>
+              <div class="canvas-giveall-field span2">
+                <input type="text" value="${escHtml(bb.model)}" placeholder="e.g. gpt-4.1-mini / claude-3-5-sonnet-latest"
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation()"
+                  oninput="auditPatch('${escHtml(bb.id)}', 'model', this.value)" />
+              </div>
+            </div>
+
+            <div class="canvas-audit-prompt-wrap">
+              <div class="canvas-mini-label">System Prompt</div>
+              <textarea
+                class="canvas-audit-textarea"
+                placeholder="Write the system prompt for this model…"
+                onmousedown="event.stopPropagation()"
+                onclick="event.stopPropagation()"
+                oninput="auditPatch('${escHtml(bb.id)}', 'systemPrompt', this.value)"
+              >${escHtml(bb.systemPrompt)}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${canvasPortButtonHtml(bb.id, "out")}
+    </div>
+  `;
+}
+
+function renderGiveAllHtml(b) {
+  const bb = normalizeGiveAllBlock(b);
+  const rows = (bb.models || []).map((m, idx) => `
+    <div class="canvas-giveall-row" data-row="${idx}">
+      ${canvasGiveAllRowOutPortHtml(bb.id, idx)}
+      <div class="canvas-mini-label">Provider</div>
+      <div class="canvas-giveall-field">
+        <select
+          onmousedown="event.stopPropagation()"
+          onclick="event.stopPropagation()"
+          onchange="giveAllPatchModel('${escHtml(bb.id)}', ${idx}, 'providerId', this.value)"
+        >${giveAllProviderOptionsHtml(m.providerId)}</select>
+      </div>
+
+      <div class="canvas-mini-label">Key</div>
+      <div class="canvas-giveall-field">
+        <select
+          onmousedown="event.stopPropagation()"
+          onclick="event.stopPropagation()"
+          onchange="giveAllPatchModel('${escHtml(bb.id)}', ${idx}, 'keyIdx', Number(this.value))"
+        >${giveAllKeyOptionsHtml(m.providerId, m.keyIdx)}</select>
+      </div>
+
+      <div class="canvas-mini-label span2">Model name</div>
+      <div class="canvas-giveall-field span2">
+        <input type="text" value="${escHtml(m.model)}" placeholder="e.g. gpt-4.1-mini / claude-3-5-sonnet-latest"
+          onmousedown="event.stopPropagation()"
+          onclick="event.stopPropagation()"
+          oninput="giveAllPatchModel('${escHtml(bb.id)}', ${idx}, 'model', this.value)" />
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="canvas-giveall" data-block-id="${escHtml(bb.id)}" style="left:${bb.x}px;top:${bb.y}px;width:${bb.w}px" role="dialog" aria-label="Give All">
+      ${canvasPortButtonHtml(bb.id, "in")}
+      <div class="canvas-giveall-inner">
+        <div class="canvas-giveall-header" data-canvas-panel-drag="1" data-block-id="${escHtml(bb.id)}">
+          <div class="canvas-giveall-title">Give All</div>
+        </div>
+        <div class="canvas-giveall-body">
+          <div class="canvas-giveall-scroll">${rows}</div>
+          <div class="canvas-audit-prompt-wrap">
+            <div class="canvas-mini-label">System prompt</div>
+            <textarea
+              class="canvas-giveall-textarea"
+              placeholder="Required: include {{prompt}} somewhere if you want the user message sent to these models."
+              onmousedown="event.stopPropagation()"
+              onclick="event.stopPropagation()"
+              oninput="giveAllPatch('${escHtml(bb.id)}', 'systemPrompt', this.value)"
+            >${escHtml(bb.systemPrompt || "")}</textarea>
+          </div>
+          <div class="canvas-giveall-footer">
+            <button type="button" class="canvas-mini-btn" onclick="giveAllAddModel('${escHtml(bb.id)}')">+ Add model</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setApiKeysStatus(text) {
+  const el = document.getElementById("api-keys-status");
+  if (!el) return;
+  el.textContent = text || "";
+}
+
+function saveApiKeysNow() {
+  if (!apiKeysDraft) return;
+  try {
+    localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(apiKeysDraft));
+    setApiKeysStatus("Saved.");
+  } catch {
+    setApiKeysStatus("Could not save (storage blocked).");
+  }
+}
+
+function scheduleApiKeysSave() {
+  setApiKeysStatus("Saving…");
+  if (apiKeysSaveTimer) clearTimeout(apiKeysSaveTimer);
+  apiKeysSaveTimer = setTimeout(() => {
+    apiKeysSaveTimer = null;
+    saveApiKeysNow();
+  }, 250);
+}
+
+function addProviderKey(providerId) {
+  if (!apiKeysDraft) apiKeysDraft = loadApiKeys();
+  apiKeysDraft[providerId] = [...(apiKeysDraft[providerId] || []), ""];
+  renderApiKeys();
+  scheduleApiKeysSave();
+  setTimeout(() => {
+    const input = document.querySelector(`[data-provider="${providerId}"][data-key-idx="${apiKeysDraft[providerId].length - 1}"]`);
+    if (input instanceof HTMLInputElement) input.focus();
+  }, 0);
+}
+
+function removeProviderKey(providerId, idx) {
+  if (!apiKeysDraft) apiKeysDraft = loadApiKeys();
+  const arr = [...(apiKeysDraft[providerId] || [])];
+  arr.splice(idx, 1);
+  apiKeysDraft[providerId] = arr;
+  renderApiKeys();
+  scheduleApiKeysSave();
+}
+
+function updateProviderKey(providerId, idx, value) {
+  if (!apiKeysDraft) apiKeysDraft = loadApiKeys();
+  const arr = [...(apiKeysDraft[providerId] || [])];
+  while (arr.length <= idx) arr.push("");
+  arr[idx] = String(value ?? "");
+  apiKeysDraft[providerId] = arr;
+  scheduleApiKeysSave();
+}
+
+function renderApiKeys() {
+  if (!apiKeysDraft) apiKeysDraft = loadApiKeys();
+  const root = document.getElementById("api-keys-root");
+  if (!root) return;
+
+  root.innerHTML = API_PROVIDERS.map(p => {
+    const keys = apiKeysDraft[p.id] || [];
+    const displayKeys = keys.length ? keys : [""];
+    const keyRows = displayKeys.map((k, idx) => `
+          <div class="key-row">
+            <div class="key-label">Key ${idx + 1}</div>
+            <input type="password" value="${escHtml(k)}" placeholder="Paste API key…" autocomplete="off"
+              data-provider="${p.id}" data-key-idx="${idx}"
+              oninput="updateProviderKey('${p.id}', ${idx}, this.value)" />
+            <button type="button" class="mini-btn danger" title="Remove key" onclick="removeProviderKey('${p.id}', ${idx})">Remove</button>
+          </div>
+        `).join("");
+
+    return `
+      <div class="provider-card">
+        <div class="provider-head">
+          <div>
+            <div class="provider-name">${escHtml(p.name)}</div>
+            <div class="provider-hint">${escHtml(p.hint)}</div>
+          </div>
+          <div class="provider-actions">
+            <button type="button" class="mini-btn" onclick="addProviderKey('${p.id}')">Add key</button>
+          </div>
+        </div>
+        <div class="keys-list">${keyRows}</div>
+      </div>
+    `;
+  }).join("");
+
+  setApiKeysStatus("Saved.");
+}
+
+// ── Pipeline dropdown ──
+function buildPipelineMenu() {
+  const pop = document.getElementById("pipeline-menu-popover");
+  if (!PIPELINES.length) {
+    pop.innerHTML = `<div style="padding:10px 12px 12px;font-size:11px;color:var(--text-3);font-family:var(--font-mono);">No models yet.</div>`;
+    return;
+  }
+  pop.innerHTML = PIPELINES.map(p => `
+    <button type="button" class="pipeline-menu-item${p.id === selectedPipeline ? " is-active" : ""}" onclick="selectPipeline('${p.id}')">
+      <div class="pipeline-menu-item-name">${escHtml(p.name)}</div>
+      <div class="pipeline-menu-item-tag">${escHtml(p.tagline)}</div>
+    </button>
+  `).join("");
+}
+
+function positionPipelineMenuNearTrigger(trigger, pop) {
+  const r = trigger.getBoundingClientRect();
+  const gap = 6;
+  const margin = 8;
+
+  pop.style.left = "0";
+  pop.style.top = "0";
+  pop.style.bottom = "auto";
+  pop.style.visibility = "hidden";
+  pop.style.pointerEvents = "none";
+  pop.classList.add("visible");
+  const ph = pop.offsetHeight;
+  const pw = pop.offsetWidth;
+  pop.classList.remove("visible");
+  pop.style.visibility = "";
+  pop.style.pointerEvents = "";
+
+  const wouldClipBelow = r.bottom + gap + ph > window.innerHeight - margin;
+  const canOpenUp = r.top - gap - ph >= margin;
+  const openUp = wouldClipBelow && canOpenUp;
+
+  let top = openUp ? (r.top - ph - gap) : (r.bottom + gap);
+  if (top + ph > window.innerHeight - margin) top = Math.max(margin, window.innerHeight - margin - ph);
+  if (top < margin) top = margin;
+
+  let left = r.left;
+  if (left + pw > window.innerWidth - margin) left = window.innerWidth - margin - pw;
+  if (left < margin) left = margin;
+
+  if (ph > window.innerHeight - 2 * margin) {
+    pop.style.maxHeight = (window.innerHeight - 2 * margin) + "px";
+    pop.style.overflowY = "auto";
+  } else {
+    pop.style.maxHeight = "";
+    pop.style.overflowY = "";
+  }
+
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+  pop.classList.add("visible");
+}
+
+function togglePipelineMenu(e) {
+  e.stopPropagation();
+  const trigger = document.getElementById("pipeline-dd-trigger");
+  const pop = document.getElementById("pipeline-menu-popover");
+  const open = pop.classList.contains("visible");
+  closeAllPopovers();
+  if (!open) {
+    buildPipelineMenu();
+    positionPipelineMenuNearTrigger(trigger, pop);
+    pop.setAttribute("aria-hidden", "false");
+    trigger.setAttribute("aria-expanded", "true");
+  }
+}
+function selectPipeline(id) {
+  if (appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+  selectedPipeline = id;
+  const p = PIPELINES.find(x => x.id === id);
+  document.getElementById("pipeline-dd-label").textContent = p ? p.name : "No model";
+  closeAllPopovers();
+  loadCanvasRuntimeForSelectedModel();
+  // Sidebar model highlighting should only reflect the model canvas view.
+  if (mainPane === "model") renderModels();
+  if (appView === "canvas") renderMessages();
+  saveModelsToStorage();
+}
+
+function syncPipelineLabel() {
+  const p = selectedPipeline ? PIPELINES.find(x => x.id === selectedPipeline) : null;
+  document.getElementById("pipeline-dd-label").textContent = p ? p.name : "No model";
+}
+
+function enterCanvasView() {
+  appView = "canvas";
+  mainPane = "model";
+  document.getElementById("composer")?.setAttribute("hidden", "true");
+  loadCanvasRuntimeForSelectedModel();
+  renderMessages();
+}
+
+function exitCanvasView(opts) {
+  const skipRender = Boolean(opts?.skipRender);
+  if (appView !== "canvas") return;
+  persistCurrentCanvasStateForSelectedModel();
+  appView = "chat";
+  mainPane = "chat";
+  document.getElementById("composer")?.removeAttribute("hidden");
+  if (!skipRender) renderMessages();
+}
+
+const CANVAS_BLOCK_LABELS = {
+  prompt: "Prompt",
+  giveAll: "Give All",
+  designation: "Designation",
+  collect: "collect",
+  audit: "Model",
+  sequence: "Sequence",
+  loopStart: "Loop Start",
+  loopEnd: "Loop End",
+  route: "Route",
+  duel: "Duel",
+  humanGate: "Human Gate",
+  io: "Output",
+  output: "Output",
+};
+
+function canvasBlockTabClasses(b) {
+  if (String(b?.type ?? "") === "collect") return "canvas-block-tab is-collect";
+  const kind = inferCanvasBlockKind(b);
+  const tone = (kind === "prompt" || kind === "output") ? " is-tone-grad" : "";
+  if (kind === "prompt") return `canvas-block-tab is-prompt${tone}`;
+  if (kind === "output") return `canvas-block-tab is-output${tone}`;
+  return "canvas-block-tab";
+}
+
+function layoutGiveAllRowOutPorts() {
+  if (appView !== "canvas") return;
+  const z = canvasZoom || 1;
+  const panels = document.querySelectorAll(".canvas-giveall");
+  panels.forEach((panel) => {
+    const body = panel.querySelector(".canvas-giveall-body");
+    if (!body) return;
+
+    // Ports must live on the outer panel so they aren't clipped by `.canvas-giveall-inner { overflow: hidden; }`
+    const rows = Array.from(body.querySelectorAll(".canvas-giveall-row"));
+    const pr = panel.getBoundingClientRect();
+    rows.forEach((row) => {
+      const rowIdx = String(row.getAttribute("data-row") || "");
+      if (!rowIdx) return;
+      const port = panel.querySelector(`.canvas-port--row-out[data-port="out:${cssAttrEscape(rowIdx)}"]`);
+      if (!port) return;
+      if (port.parentElement !== panel) panel.appendChild(port);
+      const rr = row.getBoundingClientRect();
+      // Convert screen-space delta back into world-space (panel is scaled by canvasZoom).
+      const centerYScreen = (rr.top + rr.bottom) / 2 - pr.top;
+      const centerYWorld = centerYScreen / z;
+      port.style.top = `${centerYWorld}px`;
+      port.style.left = "auto";
+      port.style.right = "-10px";
+      port.style.transform = "translateY(-50%)";
+    });
+  });
+}
+
+let giveAllRowPortLayoutRaf = 0;
+function scheduleLayoutGiveAllRowOutPorts() {
+  if (giveAllRowPortLayoutRaf) return;
+  // Two rAFs makes sure layout is stable (fonts, textarea sizing, etc).
+  giveAllRowPortLayoutRaf = requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      giveAllRowPortLayoutRaf = 0;
+      layoutGiveAllRowOutPorts();
+    });
+  });
+}
+
+function renderCanvasBlocks() {
+  const root = document.getElementById("canvas-blocks-root");
+  if (!root) return;
+  root.innerHTML = canvasBlocks.map(b => {
+    if (b?.type === "giveAll") return renderGiveAllHtml(b);
+    if (b?.type === "designation") return renderDesignationHtml(b);
+    if (b?.type === "audit") return renderAuditHtml(b);
+    if (b?.type === "loopEnd") return renderLoopEndHtml(b);
+    const inner = `
+      <div class="${canvasBlockTabClasses(b)}" title="${escHtml(b.label)}">
+        <div class="canvas-block-tab-label">${escHtml(b.label)}</div>
+      </div>
+    `;
+    return wrapCanvasTabNode(b, inner);
+  }).join("");
+  schedulePersistCanvasStateForSelectedModel();
+  scheduleUpdateCanvasEdgesSvg();
+  scheduleLayoutGiveAllRowOutPorts();
+}
+
+/** World (x,y) for top-left of a tab so it is centered in #canvas-stage viewport. */
+function worldCoordsForNewBlockCentered(tabW = CANVAS_TAB_W, tabH = CANVAS_TAB_H) {
+  const stage = document.getElementById("canvas-stage");
+  if (!stage) {
+    return { x: 4000 - tabW / 2, y: 3000 - tabH / 2 };
+  }
+  const cx = stage.clientWidth / 2;
+  const cy = stage.clientHeight / 2;
+  const wx = (cx - canvasPanX) / canvasZoom;
+  const wy = (cy - canvasPanY) / canvasZoom;
+  return { x: wx - tabW / 2, y: wy - tabH / 2 };
+}
+
+function addCanvasBlockFromMenu(type) {
+  closeCanvasAddMenu();
+  const label = CANVAS_BLOCK_LABELS[type] || type;
+  const i = canvasBlocks.length;
+  const base = worldCoordsForNewBlockCentered();
+  const jitter = 18;
+  const ox = (i % 6) * jitter - (2.5 * jitter);
+  const oy = Math.floor(i / 6) * jitter;
+  const kind =
+    type === "prompt" ? "prompt" :
+    (type === "output" || type === "io") ? "output" :
+    "";
+  if (type === "giveAll") {
+    const w = 380;
+    const id = uid();
+    const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+    const b = normalizeGiveAllBlock({
+      id,
+      type: "giveAll",
+      label,
+      kind: "",
+      x: base.x + ox - (w / 2 - CANVAS_TAB_W / 2),
+      y: base.y + oy - (CANVAS_TAB_H / 2),
+      w,
+      models: [{ providerId: firstProvider, keyIdx: 0, model: "" }],
+    });
+    canvasBlocks.push(b);
+  } else if (type === "audit") {
+    const w = 380;
+    const id = uid();
+    const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+    const b = normalizeAuditBlock({
+      id,
+      type: "audit",
+      label,
+      kind: "",
+      x: base.x + ox - (w / 2 - CANVAS_TAB_W / 2),
+      y: base.y + oy - (CANVAS_TAB_H / 2),
+      w,
+      providerId: firstProvider,
+      keyIdx: 0,
+      model: "",
+      systemPrompt: "",
+    });
+    canvasBlocks.push(b);
+  } else if (type === "designation") {
+    const w = 380;
+    const id = uid();
+    const firstProvider = API_PROVIDERS[0]?.id || "openrouter";
+    const b = normalizeDesignationBlock({
+      id,
+      type: "designation",
+      label,
+      kind: "",
+      x: base.x + ox - (w / 2 - CANVAS_TAB_W / 2),
+      y: base.y + oy - (CANVAS_TAB_H / 2),
+      w,
+      providerId: firstProvider,
+      keyIdx: 0,
+      model: "",
+      systemPrompt: "",
+      tasks: [""],
+    });
+    canvasBlocks.push(b);
+  } else if (type === "collect") {
+    const cbase = worldCoordsForNewBlockCentered(COLLECT_TAB_W, COLLECT_TAB_H);
+    canvasBlocks.push({
+      id: uid(),
+      type: "collect",
+      label: "collect",
+      kind: "",
+      x: cbase.x + ox,
+      y: cbase.y + oy,
+    });
+  } else if (type === "loopEnd") {
+    const id = uid();
+    const base2 = worldCoordsForNewBlockCentered(260, 110);
+    const b = normalizeLoopEndBlock({
+      id,
+      type: "loopEnd",
+      label,
+      kind: "",
+      x: base2.x + ox - (260 / 2 - CANVAS_TAB_W / 2),
+      y: base2.y + oy - (CANVAS_TAB_H / 2),
+      loops: 2,
+    });
+    canvasBlocks.push(b);
+  } else {
+    canvasBlocks.push({
+      id: uid(),
+      type,
+      label,
+      kind,
+      x: base.x + ox,
+      y: base.y + oy,
+    });
+  }
+  renderCanvasBlocks();
+  persistCurrentCanvasStateForSelectedModel();
+}
+
+function seedDefaultModelPromptOutputNodes() {
+  // Place near the world origin so default pan/zoom (0/1) shows them immediately.
+  const gap = 18;
+  const tabW = 92; // keep in sync with `.canvas-block-tab` min-width
+  const x0 = 240;
+  const y0 = 240;
+  canvasBlocks = [
+    { id: uid(), type: "prompt", kind: "prompt", label: "Prompt", x: x0, y: y0 },
+    { id: uid(), type: "output", kind: "output", label: "Output", x: x0 + tabW + gap, y: y0 },
+  ];
+}
+
+function onAddModel() {
+  if (appView === "canvas") persistCurrentCanvasStateForSelectedModel();
+
+  const n = PIPELINES.length + 1;
+  const id = `model-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  PIPELINES = [
+    ...PIPELINES,
+    { id, name: `Model ${n}`, tagline: "click to open canvas" },
+  ];
+  selectedPipeline = id;
+  saveModelsToStorage();
+
+  // Fresh canvas for the new model
+  applyCanvasStateToRuntime(getDefaultCanvasState());
+  seedDefaultModelPromptOutputNodes();
+  persistCurrentCanvasStateForSelectedModel();
+
+  renderModels();
+  syncPipelineLabel();
+  enterCanvasView();
+}
+
+function applyCanvasTransform() {
+  const world = document.getElementById("canvas-world");
+  if (!world) return;
+  world.style.transform = `translate(${canvasPanX}px, ${canvasPanY}px) scale(${canvasZoom})`;
+  scheduleUpdateCanvasEdgesSvg();
+}
+
+function bindCanvasZoom() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+  pane.addEventListener("wheel", (e) => {
+    if (appView !== "canvas") return;
+    e.preventDefault();
+
+    const prevZ = canvasZoom;
+    const delta = e.deltaY;
+    const nextZ = Math.min(2.5, Math.max(0.25, prevZ * (delta > 0 ? 0.92 : 1.08)));
+    if (Math.abs(nextZ - prevZ) < 0.0001) return;
+
+    const rect = pane.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const wx = (sx - canvasPanX) / prevZ;
+    const wy = (sy - canvasPanY) / prevZ;
+
+    canvasZoom = nextZ;
+    canvasPanX = sx - wx * nextZ;
+    canvasPanY = sy - wy * nextZ;
+    applyCanvasTransform();
+    schedulePersistCanvasStateForSelectedModel();
+  }, { passive: false });
+}
+
+function toggleCanvasAddMenu(e) {
+  e.stopPropagation();
+  const btn = document.getElementById("canvas-add-btn");
+  const pop = document.getElementById("canvas-add-menu-popover");
+  if (!btn || !pop) return;
+  const open = pop.classList.contains("visible");
+  closeAllPopovers();
+  if (!open) {
+    const r = btn.getBoundingClientRect();
+    pop.style.top = (r.bottom + 8) + "px";
+    pop.style.right = (window.innerWidth - r.right) + "px";
+    pop.style.left = "auto";
+    pop.style.bottom = "auto";
+    pop.classList.add("visible");
+    pop.setAttribute("aria-hidden", "false");
+    btn.setAttribute("aria-expanded", "true");
+  }
+}
+
+function closeCanvasAddMenu() {
+  const pop = document.getElementById("canvas-add-menu-popover");
+  const btn = document.getElementById("canvas-add-btn");
+  pop?.classList.remove("visible");
+  pop?.setAttribute("aria-hidden", "true");
+  btn?.setAttribute("aria-expanded", "false");
+}
+
+function bindCanvasPan() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+
+  pane.addEventListener("mousedown", (e) => {
+    if (appView !== "canvas") return;
+    if (e.button !== 1) return; // middle mouse
+    if (!e.target.closest("#canvas-stage")) return;
+    e.preventDefault();
+    isCanvasPanning = true;
+    canvasPanGrab = { sx: e.clientX, sy: e.clientY, px: canvasPanX, py: canvasPanY };
+    pane.classList.add("canvas-panning");
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isCanvasPanning) return;
+    canvasPanX = canvasPanGrab.px + (e.clientX - canvasPanGrab.sx);
+    canvasPanY = canvasPanGrab.py + (e.clientY - canvasPanGrab.sy);
+    applyCanvasTransform();
+    schedulePersistCanvasStateForSelectedModel();
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (!isCanvasPanning) return;
+    if (e.button !== 1) return;
+    isCanvasPanning = false;
+    document.getElementById("messages")?.classList.remove("canvas-panning");
+    persistCurrentCanvasStateForSelectedModel();
+  });
+}
+
+function bindBlockDrag() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+
+  pane.addEventListener("mousedown", (e) => {
+    if (appView !== "canvas") return;
+    if (e.button !== 0) return;
+    if (e.target.closest(".canvas-port")) return;
+    const giveHeader = e.target.closest(".canvas-giveall-header[data-canvas-panel-drag=\"1\"]");
+    const tab = e.target.closest(".canvas-block-tab");
+    const tabWrap = tab ? e.target.closest(".canvas-node[data-block-id]") : null;
+    const handle = giveHeader || (tab && tabWrap ? tab : null);
+    if (!handle || !handle.closest("#canvas-stage")) return;
+    const id = giveHeader
+      ? giveHeader.getAttribute("data-block-id")
+      : (tabWrap ? tabWrap.getAttribute("data-block-id") : null);
+    const b = canvasBlocks.find(x => x.id === id);
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    blockDrag = { id, sx: e.clientX, sy: e.clientY, bx: b.x, by: b.y };
+    pane.classList.add("is-block-dragging");
+  }, true);
+
+  window.addEventListener("mousemove", (e) => {
+    if (!blockDrag) return;
+    const b = canvasBlocks.find(x => x.id === blockDrag.id);
+    if (!b) {
+      blockDrag = null;
+      document.getElementById("messages")?.classList.remove("is-block-dragging");
+      return;
+    }
+    const dx = (e.clientX - blockDrag.sx) / canvasZoom;
+    const dy = (e.clientY - blockDrag.sy) / canvasZoom;
+    b.x = blockDrag.bx + dx;
+    b.y = blockDrag.by + dy;
+    const el = queryCanvasBlockEl(blockDrag.id);
+    if (el) {
+      el.style.left = `${b.x}px`;
+      el.style.top = `${b.y}px`;
+      scheduleUpdateCanvasEdgesSvg();
+    } else {
+      renderCanvasBlocks();
+    }
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (!blockDrag || e.button !== 0) return;
+    blockDrag = null;
+    document.getElementById("messages")?.classList.remove("is-block-dragging");
+    renderCanvasBlocks();
+    persistCurrentCanvasStateForSelectedModel();
+  });
+}
+
+function bindPortRightClickDelete() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+
+  pane.addEventListener("contextmenu", (e) => {
+    if (appView !== "canvas") return;
+    const t = e.target instanceof Element ? e.target : null;
+    const portEl = t ? t.closest(".canvas-port[data-block-id][data-port]") : null;
+    if (!portEl) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const blockId = String(portEl.getAttribute("data-block-id") || "");
+    const port = String(portEl.getAttribute("data-port") || "");
+    if (!blockId || !port) return;
+
+    const isIn = port === "in";
+    const isOut = port === "out" || port.startsWith("out:");
+
+    if (isIn) {
+      canvasEdges = canvasEdges.filter(ed => !(ed.toBlockId === blockId && String(ed.toPort || "in") === "in"));
+    } else if (isOut) {
+      canvasEdges = canvasEdges.filter(ed => !(ed.fromBlockId === blockId && String(ed.fromPort || "out") === port));
+    } else {
+      return;
+    }
+
+    if (canvasLinkPending && canvasLinkPending.blockId === blockId) clearCanvasLinking();
+    renderCanvasBlocks();
+    persistCurrentCanvasStateForSelectedModel();
+  }, true);
+}
+
+function bindNodeRightClickDelete() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+
+  pane.addEventListener("contextmenu", (e) => {
+    if (appView !== "canvas") return;
+    const t = e.target instanceof Element ? e.target : null;
+    if (!t) return;
+    // Ports have their own right-click behavior.
+    if (t.closest(".canvas-port")) return;
+
+    // "Nodes" = canvas tabs + loop end panel (Prompt/Output/Loop Start/Collect/Loop End).
+    const tabNode = t.closest(".canvas-node[data-block-id]");
+    const loopEndPanel = t.closest(".canvas-loopend[data-block-id]");
+    const el = loopEndPanel || tabNode;
+    if (!el) return;
+
+    const blockId = String(el.getAttribute("data-block-id") || "");
+    if (!blockId) return;
+
+    const b = canvasBlocks.find(x => x.id === blockId);
+    const type = String(b?.type ?? "");
+    const allowed =
+      type === "io" ||
+      type === "collect" ||
+      type === "loopStart" ||
+      type === "loopEnd";
+    if (!allowed) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    removeCanvasBlock(blockId);
+  }, true);
+}
+
+function bindPanelHeaderRightClickDelete() {
+  const pane = document.getElementById("messages");
+  if (!pane) return;
+
+  pane.addEventListener("contextmenu", (e) => {
+    if (appView !== "canvas") return;
+    const t = e.target instanceof Element ? e.target : null;
+    if (!t) return;
+    if (t.closest(".canvas-port")) return;
+
+    const header = t.closest(".canvas-giveall-header[data-canvas-panel-drag][data-block-id]");
+    if (!header) return;
+
+    const blockId = String(header.getAttribute("data-block-id") || "");
+    if (!blockId) return;
+    const b = canvasBlocks.find(x => x.id === blockId);
+    const type = String(b?.type ?? "");
+    const allowed = type === "giveAll" || type === "audit" || type === "loopEnd" || type === "designation";
+    if (!allowed) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    removeCanvasBlock(blockId);
+  }, true);
+}
+
+// ── Attach menu ──
+function toggleAttachMenu(e) {
+  e.stopPropagation();
+  const btn = document.getElementById("attach-txt-btn");
+  const pop = document.getElementById("attach-menu-popover");
+  const open = pop.classList.contains("visible");
+  closeAllPopovers();
+  if (!open) {
+    const r = btn.getBoundingClientRect();
+    pop.style.left = r.left + "px";
+    pop.style.bottom = (window.innerHeight - r.top + 8) + "px";
+    pop.style.top = "auto";
+    pop.classList.add("visible");
+    pop.setAttribute("aria-hidden", "false");
+    btn.setAttribute("aria-expanded", "true");
+  }
+}
+function closeAttachMenu() {
+  closeAllPopovers();
+}
+
+// ── Close all popovers ──
+function closeAllPopovers() {
+  const pipePop = document.getElementById("pipeline-menu-popover");
+  pipePop.classList.remove("visible");
+  pipePop.setAttribute("aria-hidden", "true");
+  pipePop.style.left = "";
+  pipePop.style.top = "";
+  pipePop.style.bottom = "";
+  pipePop.style.maxHeight = "";
+  pipePop.style.overflowY = "";
+  pipePop.style.visibility = "";
+  pipePop.style.pointerEvents = "";
+  document.getElementById("attach-menu-popover").classList.remove("visible");
+  document.getElementById("attach-menu-popover").setAttribute("aria-hidden", "true");
+  closeCanvasAddMenu();
+  document.getElementById("pipeline-dd-trigger").setAttribute("aria-expanded", "false");
+  document.getElementById("attach-txt-btn").setAttribute("aria-expanded", "false");
+}
+document.addEventListener("click", (e) => {
+  // Don't treat interactions inside embedded canvas UIs as "click outside" for popovers.
+  if (e.target instanceof Element && e.target.closest(".canvas-giveall")) return;
+  // Wiki-link open
+  if (e.target instanceof Element) {
+    const wl = e.target.closest("a.md-wikilink[data-wikilink]");
+    if (wl) {
+      e.preventDefault();
+      const raw = String(wl.getAttribute("data-wikilink") || "").trim();
+      const key = raw.replace(/\.md$/i, "");
+      const k = key in (memoryVault.files || {}) ? key : `${key}.md`;
+      if (memoryVault.files?.[k]) openMemoryFileByKey(k);
+      return;
+    }
+  }
+  closeAllPopovers();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    clearCanvasLinking();
+    closeAllPopovers();
+    closeSettingsModal();
+    closeNewChatModal();
+    closeRenameChatModal();
+    closeRenameModelModal();
+  }
+});
+
+// ── Keyboard: Enter to send ──
+document.getElementById("msg-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSendBtnClick(); }
+});
+
+// ── Init ──
+(function init() {
+  loadModelsFromStorage();
+  loadCanvasMapFromStorage();
+  loadCanvasRuntimeForSelectedModel();
+
+  loadChatsStateFromStorage();
+  loadMemoryVault();
+  if (!activeChatId && chats.length) activeChatId = chats[0].id;
+
+  renderSidebar();
+  renderMessages();
+  renderModels();
+  syncPipelineLabel();
+  bindCanvasZoom();
+  bindCanvasPan();
+  bindBlockDrag();
+  bindPortRightClickDelete();
+  bindNodeRightClickDelete();
+  bindPanelHeaderRightClickDelete();
+
+  const modelImport = document.getElementById("model-import-input");
+  if (modelImport) {
+    modelImport.addEventListener("change", async () => {
+      const f = modelImport.files?.[0];
+      if (!f) return;
+      try {
+        await importModelFromFile(f);
+      } catch (err) {
+        alert(String(err?.message || err || "Import failed."));
+      } finally {
+        // Reset so importing same file again triggers change.
+        modelImport.value = "";
+      }
+    });
+  }
+
+  const chatAttach = document.getElementById("chat-attach-input");
+  if (chatAttach) {
+    chatAttach.addEventListener("change", async () => {
+      const fs = Array.from(chatAttach.files || []);
+      if (!fs.length) return;
+      try {
+        const atts = await Promise.all(fs.map(fileToComposerAttachment));
+        composerFiles = [...composerFiles, ...atts];
+        renderComposerFileChips();
+      } finally {
+        // Reset so selecting same file again triggers change.
+        chatAttach.value = "";
+      }
+    });
+  }
+
+  const picker = document.getElementById("memory-vault-picker");
+  if (picker) {
+    picker.addEventListener("change", async () => {
+      const files = Array.from(picker.files || []);
+      const md = files.filter(f => /\.md$/i.test(f.name));
+      const vaultName = md[0]?.webkitRelativePath ? String(md[0].webkitRelativePath).split("/")[0] : "Vault";
+      const out = {};
+      for (const f of md) {
+        const rel = String(f.webkitRelativePath || f.name);
+        const key = rel.split("/").pop() || f.name;
+        const txt = await f.text().catch(() => "");
+        out[key] = { path: rel, content: txt };
+      }
+      memoryVault = { vaultName, files: out };
+      buildPermanentBundleFromVault();
+      saveMemoryVault();
+      renderMemoryTab();
+      // Reset picker so selecting same folder again triggers change.
+      picker.value = "";
+    });
+  }
+})();
+</script>
+</body>
+</html>
